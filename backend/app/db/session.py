@@ -6,7 +6,12 @@ from app.core.config import settings
 # For SQLModel, use the sync engine for simple cases or async for better performance
 # Since requirements has sqlalchemy[asyncio], let's use async
 
-engine = create_async_engine(settings.DATABASE_URL, echo=True, future=True)
+engine = create_async_engine(
+    settings.DATABASE_URL, 
+    echo=True, 
+    future=True, 
+    connect_args={"statement_cache_size": 0}
+)
 
 async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False

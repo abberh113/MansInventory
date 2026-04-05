@@ -16,9 +16,8 @@ class Settings(BaseSettings):
     
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = [
-        "http://localhost:5173", 
-        "http://127.0.0.1:5173",
-        "https://mansluxury.netlify.app"  # Anticipated Netlify URL
+        "https://manspos.netlify.app",
+        "https://mansluxury.netlify.app"
     ]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
