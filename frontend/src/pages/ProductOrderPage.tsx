@@ -18,7 +18,6 @@ const ProductOrderPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,7 +91,6 @@ const ProductOrderPage: React.FC = () => {
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
 
       {loading ? <div className="loading-text">Optimizing product catalog...</div> : (
         <div className="products-grid">
