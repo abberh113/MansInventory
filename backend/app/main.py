@@ -59,15 +59,20 @@ app.add_middleware(
 # Custom exception handler to ensure CORS headers are always present on errors
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
     origin = request.headers.get("origin", "")
     headers = {}
     if origin in ALLOWED_ORIGINS:
         headers["Access-Control-Allow-Origin"] = origin
         headers["Access-Control-Allow-Credentials"] = "true"
-    print(f"❌ Unhandled error on {request.url}: {exc}")
+    
+    # LOG THE ACTUAL ERROR TO THE SERVER OUTPUT (Cloud Run logs)
+    print(f"❌ SERVER ERROR on {request.method} {request.url}")
+    print(f"Traceback: {''.join(traceback.format_exception(None, exc, exc.__traceback__))}")
+    
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"},
+        content={"detail": "Internal server error", "error_type": type(exc).__name__},
         headers=headers,
     )
 
