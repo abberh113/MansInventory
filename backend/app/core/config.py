@@ -14,10 +14,11 @@ class Settings(BaseSettings):
     SMTP_PASS: str = "wwmg axea huqx lali"
     EMAILS_FROM_EMAIL: str = "Mans Luxury Empire <mansluxurystore@gmail.com>"
     
-    # CORS
     BACKEND_CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "https://manspos.netlify.app",
-        "https://mansluxury.netlify.app"
+        "https://mansluxury.netlify.app",
     ]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
