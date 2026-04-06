@@ -33,6 +33,6 @@ options:
 
 # Note: These variables are automatically provided by Cloud Run triggers
 substitutions:
-  _SERVICE_NAME: manspos
+  _SERVICE_NAME: mansinventory
   _DEPLOY_REGION: europe-west1
   _GCR_HOSTNAME: gcr.io
