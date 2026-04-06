@@ -50,38 +50,52 @@ async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(), 
     session: AsyncSession = Depends(get_session)
 ):
-    # Use email for login (passed in the 'username' field of OAuth2 form)
-    statement = select(User).where(User.email == form_data.username)
-    result = await session.execute(statement)
-    user = result.scalar_one_or_none()
-    
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
-    
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Your account has been suspended by an administrator.")
+    try:
+        # Use email for login (passed in the 'username' field of OAuth2 form)
+        statement = select(User).where(User.email == form_data.username)
+        result = await session.execute(statement)
+        user = result.scalar_one_or_none()
         
-    if not user.is_confirmed and user.role != UserRole.SUPER_ADMIN:
-        raise HTTPException(status_code=403, detail="Your account is pending confirmation by an administrator. Please check back later.")
-    
-    # Log the Login event
-    await create_audit_log(session, user, "LOGIN", details="Successful login", request=request)
-    
-    # Requirement: Notify Admins except for Super Admin login
-    if user.role != UserRole.SUPER_ADMIN:
-        from app.services.email import notify_admins
-        await notify_admins(
-            f"🔔 User Login: {user.full_name}",
-            f"The user {user.full_name} ({user.email}) has signed in to the system at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.",
-            session
+        if not user or not verify_password(form_data.password, user.hashed_password):
+            raise HTTPException(status_code=401, detail="Incorrect email or password")
+        
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Your account has been suspended by an administrator.")
+            
+        if not user.is_confirmed and user.role != UserRole.SUPER_ADMIN:
+            raise HTTPException(status_code=403, detail="Your account is pending confirmation by an administrator. Please check back later.")
+        
+        # Log the Login event (this was protected in audit.py)
+        await create_audit_log(session, user, "LOGIN", details="Successful login", request=request)
+        
+        # Requirement: Notify Admins except for Super Admin login
+        if user.role != UserRole.SUPER_ADMIN:
+            try:
+                from app.services.email import notify_admins
+                await notify_admins(
+                    f"🔔 User Login: {user.full_name}",
+                    f"The user {user.full_name} ({user.email}) has signed in to the system at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.",
+                    session
+                )
+            except Exception as e:
+                print(f"⚠️ Login email notification failed (non-fatal): {e}")
+        
+        access_token = create_access_token(data={"sub": user.email})
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user_role": user.role
+        }
+    except Exception as e:
+        # If it's already an HTTPException, just raise it
+        if isinstance(e, HTTPException):
+            raise e
+        # Otherwise, expose the error type and message for debugging!
+        # THIS WILL SAVE US FROM THE 500 MYSTERY
+        raise HTTPException(
+            status_code=500, 
+            detail=f"DEBUG ERROR: {type(e).__name__}: {str(e)}"
         )
-    
-    access_token = create_access_token(data={"sub": user.email})
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_role": user.role
-    }
 
 @router.post("/logout")
 async def logout_user(
