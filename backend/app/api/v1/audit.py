@@ -24,28 +24,34 @@ async def get_audit_logs(
 
 # Helper function to create logs (internal use)
 async def create_audit_log(session: AsyncSession, user: User, action: str, details: str = None, request: Request = None):
-    new_log = AuditLog(
-        user_id=user.id,
-        full_name=user.full_name,
-        email=user.email,
-        action=action,
-        details=details,
-        ip_address=request.client.host if request else None
-    )
-    session.add(new_log)
-    await session.commit()
-    
-    # Send email notification asynchronously via asyncio inside email.py
-    subject = f"Audit Log Alert: {action}"
-    body = f"""
-    <html>
-        <body>
-            <h2>New Activity Log</h2>
-            <p><strong>Action:</strong> {action}</p>
-            <p><strong>User:</strong> {user.full_name} ({user.email})</p>
-            <p><strong>Details:</strong> {details or 'N/A'}</p>
-            <p><strong>IP Address:</strong> {request.client.host if request else 'N/A'}</p>
-        </body>
-    </html>
-    """
-    await notify_admins(subject, body, session)
+    try:
+        new_log = AuditLog(
+            user_id=user.id,
+            full_name=user.full_name,
+            email=user.email,
+            action=action,
+            details=details,
+            ip_address=request.client.host if request else None
+        )
+        session.add(new_log)
+        await session.commit()
+    except Exception as e:
+        print(f"⚠️ Audit log write failed (non-fatal): {e}")
+
+    # Send email notification in background — never block or crash the caller
+    try:
+        subject = f"Audit Log Alert: {action}"
+        body = f"""
+        <html>
+            <body>
+                <h2>New Activity Log</h2>
+                <p><strong>Action:</strong> {action}</p>
+                <p><strong>User:</strong> {user.full_name} ({user.email})</p>
+                <p><strong>Details:</strong> {details or 'N/A'}</p>
+                <p><strong>IP Address:</strong> {request.client.host if request else 'N/A'}</p>
+            </body>
+        </html>
+        """
+        asyncio.create_task(notify_admins(subject, body, session))
+    except Exception as e:
+        print(f"⚠️ Audit email notification failed (non-fatal): {e}")
