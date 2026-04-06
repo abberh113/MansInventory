@@ -24,34 +24,46 @@ async def get_audit_logs(
 
 # Helper function to create logs (internal use)
 async def create_audit_log(session: AsyncSession, user: User, action: str, details: str = None, request: Request = None):
+    # Get details for the email before possible commit
+    user_id = user.id
+    full_name = user.full_name
+    email = user.email
+    ip_address = request.client.host if request else "N/A"
+    
     try:
         new_log = AuditLog(
-            user_id=user.id,
-            full_name=user.full_name,
-            email=user.email,
+            user_id=user_id,
+            full_name=full_name,
+            email=email,
             action=action,
             details=details,
-            ip_address=request.client.host if request else None
+            ip_address=ip_address
         )
         session.add(new_log)
         await session.commit()
     except Exception as e:
-        print(f"⚠️ Audit log write failed (non-fatal): {e}")
+        print(f"⚠️ Audit log write failed: {e}")
 
-    # Send email notification in background — never block or crash the caller
-    try:
-        subject = f"Audit Log Alert: {action}"
-        body = f"""
-        <html>
-            <body>
-                <h2>New Activity Log</h2>
-                <p><strong>Action:</strong> {action}</p>
-                <p><strong>User:</strong> {user.full_name} ({user.email})</p>
-                <p><strong>Details:</strong> {details or 'N/A'}</p>
-                <p><strong>IP Address:</strong> {request.client.host if request else 'N/A'}</p>
-            </body>
-        </html>
-        """
-        asyncio.create_task(notify_admins(subject, body, session))
-    except Exception as e:
-        print(f"⚠️ Audit email notification failed (non-fatal): {e}")
+    # Fire-and-forget email notification without reusing the current session object
+    # This prevents the 500 error when session is committed
+    async def _send_notif():
+        from app.db.session import async_session
+        try:
+            async with async_session() as new_session:
+                subject = f"Audit Log Alert: {action}"
+                body = f"""
+                <html>
+                    <body>
+                        <h2>New Activity Log</h2>
+                        <p><strong>Action:</strong> {action}</p>
+                        <p><strong>User:</strong> {full_name} ({email})</p>
+                        <p><strong>Details:</strong> {details or 'N/A'}</p>
+                        <p><strong>IP Address:</strong> {ip_address}</p>
+                    </body>
+                </html>
+                """
+                await notify_admins(subject, body, new_session)
+        except Exception as e:
+            print(f"⚠️ Audit email notification failed: {e}")
+
+    asyncio.create_task(_send_notif())
