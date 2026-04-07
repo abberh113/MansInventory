@@ -44,19 +44,25 @@ async def register_user(user_in: UserCreate, session: AsyncSession = Depends(get
     )
     return user
 
+from pydantic import BaseModel, EmailStr
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
 @router.post("/login", response_model=Token)
 async def login_user(
     request: Request,
-    form_data: OAuth2PasswordRequestForm = Depends(), 
+    login_data: LoginRequest, 
     session: AsyncSession = Depends(get_session)
 ):
     try:
-        # Use email for login (passed in the 'username' field of OAuth2 form)
-        statement = select(User).where(User.email == form_data.username)
+        # Use explicit email field
+        statement = select(User).where(User.email == login_data.email)
         result = await session.execute(statement)
         user = result.scalar_one_or_none()
         
-        if not user or not verify_password(form_data.password, user.hashed_password):
+        if not user or not verify_password(login_data.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Incorrect email or password")
         
         if not user.is_active:
