@@ -16,7 +16,12 @@ API.interceptors.request.use((config) => {
 
 // Auth
 export const loginUser = (email: string, password: string) => {
-  return API.post('/api/v1/auth/login', { email, password });
+  const form = new URLSearchParams();
+  form.append('username', email); // OAuth2 expects 'username' field, we pass email
+  form.append('password', password);
+  return API.post('/api/v1/auth/login', form, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
 };
 
 export const registerUser = (data: { full_name: string; email: string; password: string; role?: string }) =>
