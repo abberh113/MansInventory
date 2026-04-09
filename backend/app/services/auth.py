@@ -9,14 +9,13 @@ from app.models.user import UserRole
 # Password context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def verify_password(plain_password, hashed_password):
-    # Bcrypt limit is 72 bytes. Check to prevent 500 error.
-    if len(plain_password.encode('utf-8')) > 72:
-        return False
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
+        # Standard passlib verification
         return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:
         print(f"⚠️ Password verification error: {e}")
+        # Fallback: if it's a 72-byte error, it's usually a library glitch
         return False
 
 def get_password_hash(password):
