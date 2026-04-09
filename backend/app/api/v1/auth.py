@@ -51,12 +51,26 @@ async def login_user(
     session: AsyncSession = Depends(get_session)
 ):
     try:
+        # DEBUG LOGS FOR VERCEL
+        from app.core.config import settings
+        db_hint = str(settings.DATABASE_URL).split("@")[-1] if "@" in str(settings.DATABASE_URL) else "Unknown"
+        print(f"📡 Backend connecting to DB at: {db_hint}")
+        print(f"🔍 Login Attempt: email='{form_data.username}'")
+        
         # Use email for login (passed in the 'username' field of OAuth2 form)
         statement = select(User).where(User.email == form_data.username)
         result = await session.execute(statement)
         user = result.scalar_one_or_none()
         
-        if not user or not verify_password(form_data.password, user.hashed_password):
+        if not user:
+            print(f"❌ Login Failed: User with email '{form_data.username}' not found in DB.")
+            raise HTTPException(status_code=401, detail="Incorrect email or password")
+            
+        print(f"✅ User found: {user.email} (Role: {user.role})")
+        
+        pw_match = verify_password(form_data.password, user.hashed_password)
+        if not pw_match:
+            print(f"❌ Login Failed: Password mismatch for user '{user.email}'.")
             raise HTTPException(status_code=401, detail="Incorrect email or password")
         
         if not user.is_active:
