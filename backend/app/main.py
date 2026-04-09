@@ -12,11 +12,13 @@ import asyncio
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-# Ensure uploads directory exists at startup
-try:
-    os.makedirs("uploads/products", exist_ok=True)
-except Exception as e:
-    print(f"⚠️ Could not create uploads directory: {e}")
+# Ensure uploads directory exists if possible (ephemeral on Vercel)
+UPLOAD_DIR = "uploads"
+if not os.path.exists(UPLOAD_DIR):
+    try:
+        os.makedirs(f"{UPLOAD_DIR}/products", exist_ok=True)
+    except Exception as e:
+        print(f"⚠️ Could not create uploads directory (expected on Vercel): {e}")
 
 async def run_migrations():
     """Run DB migrations separately so they don't block app startup."""
@@ -79,8 +81,11 @@ async def global_exception_handler(request: Request, exc: Exception):
         headers=headers,
     )
 
-# Serve uploaded files
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Serve uploaded files (only if directory exists)
+if os.path.exists(UPLOAD_DIR):
+    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+else:
+    print("⚠️ Uploads directory not found. Static file serving for uploads disabled.")
 
 # Register Routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
