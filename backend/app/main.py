@@ -13,7 +13,10 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 # Ensure uploads directory exists at startup
-os.makedirs("uploads/products", exist_ok=True)
+try:
+    os.makedirs("uploads/products", exist_ok=True)
+except Exception as e:
+    print(f"⚠️ Could not create uploads directory: {e}")
 
 async def run_migrations():
     """Run DB migrations separately so they don't block app startup."""
