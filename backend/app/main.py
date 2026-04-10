@@ -21,11 +21,12 @@ if not os.path.exists(UPLOAD_DIR):
         print(f"⚠️ Could not create uploads directory (expected on Vercel): {e}")
 
 async def run_migrations():
-    """Run DB migrations separately so they don't block app startup."""
+    """Run DB migrations manually when needed."""
     try:
         await init_db()
         async with engine.begin() as conn:
             await conn.execute(text('ALTER TABLE product ADD COLUMN IF NOT EXISTS image_path VARCHAR'))
+            # Check for username column (old schema)
             result = await conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='user' AND column_name='username'"))
             if result.first():
                 print("Migrating 'username' to 'full_name'...")
@@ -38,8 +39,7 @@ async def run_migrations():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Run migrations in background — don't block startup
-    asyncio.create_task(run_migrations())
+    # Pro Tip: Only run migrations manually to keep Vercel startups fast!
     yield
 
 app = FastAPI(
