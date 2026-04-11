@@ -327,12 +327,12 @@ const OrdersPage: React.FC = () => {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
+      <div className="page-header orders-header">
         <div>
           <h1 className="page-title">Orders</h1>
           <p className="page-subtitle">View and manage customer orders</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="header-actions">
           <button 
             className="btn-secondary" 
             onClick={() => {
@@ -342,12 +342,11 @@ const OrdersPage: React.FC = () => {
             }}
             disabled={!canGenerateStatement}
             title={!canGenerateStatement ? "Only HR, Admin, and Super Admins can generate official statements" : "Generate Official Sales Statement"}
-            style={{ opacity: canGenerateStatement ? 1 : 0.5, cursor: canGenerateStatement ? 'pointer' : 'not-allowed' }}
           >
-            📄 Generate Statement
+            📄 Statement
           </button>
-          <button className="btn-secondary" onClick={printDailySummary}>🖨️ Daily Summary</button>
-          <button className="btn-secondary" onClick={exportToCSV}>📤 Export CSV</button>
+          <button className="btn-secondary" onClick={printDailySummary}>🖨️ Summary</button>
+          <button className="btn-secondary" onClick={exportToCSV}>📤 Export</button>
           <button className="btn-primary" onClick={() => navigate('/products')}>+ New Order</button>
         </div>
       </div>
@@ -405,12 +404,12 @@ const OrdersPage: React.FC = () => {
                 <>
                   {filteredOrders.map((order) => (
                     <tr key={order.id}>
-                      <td><strong>#ORD-{order.id}</strong></td>
-                      <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                      <td>{order.customer_name}</td>
-                      <td className="small text-secondary">{order.staff_email || 'System'}</td>
-                      <td className="price">₦{order.total_amount?.toLocaleString()}</td>
-                      <td>
+                      <td data-label="Order ID"><strong>#ORD-{order.id}</strong></td>
+                      <td data-label="Date">{new Date(order.created_at).toLocaleDateString()}</td>
+                      <td data-label="Customer">{order.customer_name}</td>
+                      <td data-label="Initiated By" className="small text-secondary">{order.staff_email || 'System'}</td>
+                      <td data-label="Total" className="price">₦{order.total_amount?.toLocaleString()}</td>
+                      <td data-label="Status">
                         {editingStatus?.id === order.id ? (
                           <select
                             value={editingStatus.status}
@@ -422,17 +421,17 @@ const OrdersPage: React.FC = () => {
                           <span className={`status-badge ${statusColor[order.status] ?? ''}`}>{order.status}</span>
                         )}
                       </td>
-                      <td>
+                      <td data-label="Items">
                         {order.items?.length ?? 0}
                       </td>
-                      <td className="action-cell">
-                        <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--accent)', color: 'white', marginRight: '5px' }} onClick={() => navigate(`/receipt/${order.id}`)}>📄 View</button>
+                      <td data-label="Actions" className="action-cell">
+                        <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--accent)', color: 'white' }} onClick={() => navigate(`/receipt/${order.id}`)}>📄 View</button>
                         {canEdit && (
                           editingStatus?.id === order.id ? (
-                            <>
-                              <button className="btn-edit" onClick={handleStatusUpdate}>✅ Save</button>
+                            <div className="d-flex gap-1">
+                              <button className="btn-edit" onClick={handleStatusUpdate}>✅</button>
                               <button className="btn-delete" onClick={() => setEditingStatus(null)}>✕</button>
-                            </>
+                            </div>
                           ) : (
                             <button className="btn-edit" onClick={() => setEditingStatus({ id: order.id, status: order.status })}>
                               ✏️ Status

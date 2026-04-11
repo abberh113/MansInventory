@@ -80,22 +80,22 @@ const AuditLogsPage: React.FC = () => {
                 ) : (
                   logs.map((log) => (
                     <tr key={log.id} className="border-secondary-subtle">
-                      <td className="ps-4 py-4 small text-secondary">
+                      <td data-label="Timestamp" className="ps-4 py-4 small text-secondary">
                         {new Date(log.created_at).toLocaleString()}
                       </td>
-                      <td>
+                      <td data-label="Member">
                         <div className="fw-bold text-white">{log.full_name}</div>
                         <div className="small text-secondary" style={{fontSize: '0.75rem'}}>{log.email}</div>
                       </td>
-                      <td>
+                      <td data-label="Action">
                         <span className={`${getActionBadgeClass(log.action)} px-3 py-2 rounded-2 small fw-bold`}>
                           {log.action}
                         </span>
                       </td>
-                      <td className="text-secondary small">
+                      <td data-label="Details" className="text-secondary small">
                         {log.details || '—'}
                       </td>
-                      <td className="text-end pe-4 small text-secondary">
+                      <td data-label="IP Address" className="text-end pe-4 small text-secondary">
                         <code>{log.ip_address || 'Internal'}</code>
                       </td>
                     </tr>

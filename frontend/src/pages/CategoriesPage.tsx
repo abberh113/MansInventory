@@ -79,11 +79,11 @@ const CategoriesPage: React.FC = () => {
                 <tr><td colSpan={4} className="empty-state">No categories yet. Add your first one!</td></tr>
               ) : categories.map((cat) => (
                 <tr key={cat.id}>
-                  <td>#{cat.id}</td>
-                  <td><span className="tag">{cat.name}</span></td>
-                  <td>{cat.description || '—'}</td>
+                  <td data-label="ID">#{cat.id}</td>
+                  <td data-label="Name"><span className="tag">{cat.name}</span></td>
+                  <td data-label="Description">{cat.description || '—'}</td>
                   {canEdit && (
-                    <td className="action-cell">
+                    <td data-label="Actions" className="action-cell">
                       <button className="btn-edit" onClick={() => openEdit(cat)}>✏️ Edit</button>
                       <button className="btn-delete" onClick={() => handleDelete(cat.id)}>🗑️ Delete</button>
                     </td>

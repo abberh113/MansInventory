@@ -85,7 +85,7 @@ const DashboardPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '12px' }}>
+          <div className="dashboard-grid responsive-grid" style={{ marginTop: '12px' }}>
             {/* Low Stock Section */}
             <div className="info-card" style={{ maxWidth: 'none' }}>
               <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

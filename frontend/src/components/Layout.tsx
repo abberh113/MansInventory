@@ -45,11 +45,15 @@ const Layout: React.FC = () => {
 
   return (
     <div className={`layout ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      {/* Mobile Overlay */}
+      {sidebarOpen && <div className="mobile-overlay" onClick={() => setSidebarOpen(false)}></div>}
+
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
           <span className="brand-icon">👑</span>
-          {sidebarOpen && <span className="brand-text">Mans Luxury</span>}
+          <span className="brand-text">Mans Luxury</span>
+          <button className="mobile-close" onClick={() => setSidebarOpen(false)}>✕</button>
         </div>
 
         <nav className="sidebar-nav">
@@ -58,14 +62,15 @@ const Layout: React.FC = () => {
               key={item.path}
               to={item.path}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+              onClick={() => window.innerWidth < 768 && setSidebarOpen(false)}
             >
               <span className="nav-icon">{item.icon}</span>
-              {sidebarOpen && <span className="nav-label">{item.label}</span>}
+              <span className="nav-label">{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <button className="sidebar-toggle-desktop" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? '◀' : '▶'}
         </button>
       </aside>
@@ -74,23 +79,27 @@ const Layout: React.FC = () => {
       <div className="main-area">
         <header className="topbar">
           <div className="topbar-left">
+            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
+              ☰
+            </button>
             <h2 className="topbar-title">Mans Luxury Empire</h2>
           </div>
           <div className="topbar-right">
-            <button className="btn-secondary" style={{ position: 'relative', paddingRight: '45px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setIsCartOpen(true)}>
-              🛒 Cart
-              {cartCount > 0 && <span style={{ position: 'absolute', right: '10px', background: 'var(--gold)', color: '#000', width: '22px', height: '22px', borderRadius: '50%', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{cartCount}</span>}
+            <button className="btn-secondary cart-btn" onClick={() => setIsCartOpen(true)}>
+              🛒 <span className="cart-text">Cart</span>
+              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
             </button>
             <div className="user-info">
               <div className="user-avatar">{user?.full_name?.[0]?.toUpperCase()}</div>
-              {sidebarOpen && (
-                <div className="user-details">
-                  <span className="user-name">{user?.full_name}</span>
-                  <span className="user-role-badge">{roleLabel[user?.role ?? ''] ?? user?.role}</span>
-                </div>
-              )}
+              <div className="user-details-desktop">
+                <span className="user-name">{user?.full_name}</span>
+                <span className="user-role-badge">{roleLabel[user?.role ?? ''] ?? user?.role}</span>
+              </div>
             </div>
-            <button className="btn-logout" onClick={handleLogout}>Logout</button>
+            <button className="btn-logout" onClick={handleLogout}>
+              <span className="logout-icon">🚪</span>
+              <span className="logout-text">Logout</span>
+            </button>
           </div>
         </header>
 

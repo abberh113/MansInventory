@@ -199,8 +199,8 @@ const UsersPage: React.FC = () => {
               <tbody className="border-top-0">
                 {users.map((u) => (
                   <tr key={u.id} className={`${!u.is_confirmed ? 'opacity-75' : ''} border-secondary-subtle`}>
-                    <td className="ps-4 py-4">
-                      <div className="d-flex align-items-center">
+                    <td data-label="Member Details" className="ps-4 py-4">
+                      <div className="d-flex align-items-center user-cell-mobile">
                         <div className="avatar me-3 bg-gradient bg-secondary text-white rounded-3 fs-5 d-flex align-items-center justify-content-center" style={{width: '45px', height: '45px', background: 'linear-gradient(135deg, #1d1e22 0%, #343a40 100%)'}}>
                           {u.full_name[0].toUpperCase()}
                         </div>
@@ -210,23 +210,23 @@ const UsersPage: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Designation">
                       <span className={`${getRoleBadgeClass(u.role)} px-3 py-2 rounded-2`}>
                         {u.role.replace('_', ' ').toUpperCase()}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Confirmation Status">
                       <span className={`badge ${u.is_confirmed ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'} border px-3 py-2`}>
                         {u.is_confirmed ? 'CONFIRMED ✅' : 'PENDING ⏳'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Account Status">
                       <span className={`badge ${u.is_active ? 'bg-info-subtle text-info' : 'bg-danger-subtle text-danger'} border px-3 py-2`}>
                         {u.is_active ? 'ACTIVE' : 'SUSPENDED 🚫'}
                       </span>
                     </td>
-                    <td className="text-end pe-4">
-                      <div className="d-flex justify-content-end gap-2">
+                    <td data-label="Actions" className="text-end pe-4">
+                      <div className="d-flex justify-content-end gap-2 action-btns-mobile">
                         {canConfirm && !u.is_confirmed && (
                           <button className="btn btn-success btn-sm px-3 rounded-2" onClick={() => handleConfirmAction(u.id)}>Confirm User</button>
                         )}
