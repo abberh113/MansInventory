@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate, Outlet, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import CartDrawer from './CartDrawer';
@@ -54,93 +54,103 @@ const Layout: React.FC = () => {
   ];
 
   return (
-    <div className="layout">
+    <div className="vh-100 d-flex flex-column overflow-hidden bg-dark">
       
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="mobile-overlay"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
-
-      {/* Sidebar */}
-      <aside 
-        className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
-      >
-        <div className="sidebar-brand">
-          <div className="brand-text d-flex align-items-center gap-2">
-            <span className="brand-icon">👑</span> Mans Luxury
-          </div>
-          {isMobile && (
-            <button className="mobile-close" onClick={() => setSidebarOpen(false)}>✕</button>
-          )}
-        </div>
-
-        <nav className="sidebar-nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <span className="nav-label">{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="main-area">
-        
-        {/* Topbar */}
-        <header className="topbar">
+      {/* Bootstrap Navbar (Topbar) */}
+      <nav className="navbar navbar-expand-lg navbar-dark bg-black border-bottom border-secondary px-3" style={{ height: '70px', zIndex: 1060 }}>
+        <div className="container-fluid p-0">
           <div className="d-flex align-items-center gap-3">
-            {isMobile && (
-              <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
-                ☰
-              </button>
-            )}
-            <h5 className="topbar-title m-0 d-none d-sm-block">Mans Luxury Empire</h5>
+            <button 
+              className="navbar-toggler d-block d-lg-none border-0 p-0 text-warning" 
+              type="button" 
+              data-bs-toggle="offcanvas" 
+              data-bs-target="#sidebarOffcanvas"
+              aria-controls="sidebarOffcanvas"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <span className="navbar-toggler-icon" style={{ width: '24px' }}></span>
+            </button>
+            <Link to="/dashboard" className="navbar-brand fw-bold m-0 d-flex align-items-center gap-2">
+              <span className="fs-4">👑</span>
+              <span className="d-none d-sm-inline" style={{ background: 'linear-gradient(135deg, #d4a843, #f0c96a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MANS LUXURY</span>
+            </Link>
           </div>
-          
-          <div className="topbar-right">
-            <button className="btn-primary btn-sm cart-btn" onClick={() => setIsCartOpen(true)}>
-              🛒 <span className="cart-text">Cart</span>
-              {cartCount > 0 && (
-                <span className="badge rounded-pill bg-danger ms-1" style={{ fontSize: '10px' }}>
-                  {cartCount}
-                </span>
-              )}
+
+          <div className="d-flex align-items-center gap-2 gap-md-3">
+            <button className="btn btn-warning btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm" onClick={() => setIsCartOpen(true)}>
+              🛒 <span className="d-none d-md-inline">Cart</span>
+              {cartCount > 0 && <span className="badge bg-danger rounded-pill">{cartCount}</span>}
             </button>
 
-            <div className="user-info">
-              <div className="user-avatar shadow-sm">
+            <div className="d-flex align-items-center gap-2 border-start border-secondary ps-3">
+              <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '36px', height: '36px', fontSize: '14px', background: 'linear-gradient(135deg, #1d1e22, #343a40)', color: 'white' }}>
                 {user?.full_name?.[0]?.toUpperCase()}
               </div>
-              <div className="user-details user-details-desktop">
-                <span className="user-name">{user?.full_name}</span>
-                <span className="user-role-badge">
-                  {roleLabel[user?.role ?? ''] ?? user?.role}
-                </span>
+              <div className="d-none d-lg-flex flex-column lh-1">
+                <span className="fw-bold text-white small">{user?.full_name}</span>
+                <span className="text-warning mt-1" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{roleLabel[user?.role ?? ''] ?? user?.role}</span>
               </div>
             </div>
 
-            <button className="btn-logout" onClick={handleLogout} title="Logout">
-              <span className="logout-text">Logout</span>
-              <span className="logout-icon text-danger">🚪</span>
+            <button className="btn btn-outline-danger btn-sm rounded-circle p-2 border-0" onClick={handleLogout} title="Logout">
+              🚪
             </button>
           </div>
-        </header>
+        </div>
+      </nav>
 
-        {/* Page Content */}
-        <main className="page-content">
+      <div className="d-flex flex-grow-1 overflow-hidden">
+        
+        {/* Sidebar for Desktop (LG and up) */}
+        <aside className="d-none d-lg-flex flex-column bg-black border-end border-secondary p-3 shadow-lg" style={{ width: '260px' }}>
+          <nav className="nav flex-column gap-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-white ${isActive ? 'bg-primary fw-bold shadow-sm' : 'opacity-75 hov-warning'}`}
+                style={{ transition: '0.2s' }}
+              >
+                <span className="fs-5">{item.icon}</span>
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Mobile Offcanvas Sidebar */}
+        <div className={`offcanvas offcanvas-start bg-black text-white ${sidebarOpen ? 'show' : ''}`} tabIndex={-1} id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel" style={{ visibility: sidebarOpen ? 'visible' : 'hidden', width: '280px' }}>
+          <div className="offcanvas-header border-bottom border-secondary">
+            <h5 className="offcanvas-title fw-bold d-flex align-items-center gap-2" id="sidebarOffcanvasLabel">
+              <span>👑</span> MANS LUXURY
+            </h5>
+            <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close" onClick={() => setSidebarOpen(false)}></button>
+          </div>
+          <div className="offcanvas-body p-3">
+             <nav className="nav flex-column gap-2">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) => `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-white ${isActive ? 'bg-primary fw-bold' : 'opacity-75'}`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="fs-5">{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        </div>
+        {sidebarOpen && <div className="offcanvas-backdrop fade show" onClick={() => setSidebarOpen(false)}></div>}
+
+        {/* Main Content Area */}
+        <main className="flex-grow-1 overflow-auto p-3 p-md-4" style={{ backgroundColor: '#0a0a0f' }}>
           <Outlet />
         </main>
-        
-        <CartDrawer />
       </div>
+
+      <CartDrawer />
     </div>
   );
 };
