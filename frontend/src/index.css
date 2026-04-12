@@ -258,10 +258,10 @@ a { text-decoration: none; color: inherit; }
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  transition: width 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
   overflow: hidden;
   flex-shrink: 0;
-  z-index: 100;
+  z-index: 1050;
   position: relative;
 }
 .sidebar-closed .sidebar { width: var(--sidebar-closed-w); }
@@ -647,17 +647,20 @@ a { text-decoration: none; color: inherit; }
   .layout { display: block; }
   
   .sidebar { 
-    position: fixed; 
-    left: calc(-1 * var(--sidebar-w));
+    position: fixed !important; 
     top: 0;
     bottom: 0;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    left: 0;
+    width: var(--sidebar-w);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
     background: var(--bg);
+    z-index: 2000 !important;
   }
   
-  .sidebar-open .sidebar { transform: translateX(var(--sidebar-w)); }
-  .sidebar-closed .sidebar { transform: translateX(0); } /* On mobile closed means offscreen */
+  .sidebar-open { transform: translateX(0) !important; }
+  .sidebar-closed { transform: translateX(-100%) !important; }
 
   .sidebar-toggle-desktop, .user-details-desktop { display: none !important; }
   .mobile-close { display: block; background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; }

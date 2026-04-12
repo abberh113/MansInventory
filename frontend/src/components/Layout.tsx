@@ -67,13 +67,6 @@ const Layout: React.FC = () => {
       {/* Sidebar */}
       <aside 
         className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
-        style={{
-          position: isMobile ? 'fixed' : 'relative',
-          left: isMobile ? (sidebarOpen ? '0' : '-260px') : '0',
-          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          zIndex: 1050,
-          boxShadow: isMobile && sidebarOpen ? '5px 0 30px rgba(0,0,0,0.5)' : 'none'
-        }}
       >
         <div className="sidebar-brand">
           <div className="brand-text d-flex align-items-center gap-2">
