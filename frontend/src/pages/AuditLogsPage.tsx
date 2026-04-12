@@ -70,8 +70,8 @@ const AuditLogsPage: React.FC = () => {
                   <th className="ps-4 py-3">Timestamp</th>
                   <th>Member</th>
                   <th>Action</th>
-                  <th>Details</th>
-                  <th className="text-end pe-4">IP Address</th>
+                  <th className="d-none d-md-table-cell">Details</th>
+                  <th className="text-end pe-4 d-none d-lg-table-cell">IP Address</th>
                 </tr>
               </thead>
               <tbody className="border-top-0">

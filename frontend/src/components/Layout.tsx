@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import CartDrawer from './CartDrawer';
@@ -17,18 +17,28 @@ const Layout: React.FC = () => {
   const { user, logout } = useAuth();
   const { cartCount, setIsCartOpen } = useCart();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const isLoggingOut = React.useRef(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location, isMobile]);
 
   const handleLogout = async () => {
     if (isLoggingOut.current) return;
     isLoggingOut.current = true;
-    try {
-      await logoutUser();
-    } catch {
-      // Ignore logout log error
-    }
+    try { await logoutUser(); } catch { }
     logout();
     navigate('/login');
   };
@@ -44,16 +54,34 @@ const Layout: React.FC = () => {
   ];
 
   return (
-    <div className={`layout ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-      {/* Mobile Overlay */}
-      {sidebarOpen && <div className="mobile-overlay" onClick={() => setSidebarOpen(false)}></div>}
+    <div className="layout">
+      
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="mobile-overlay"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
 
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside 
+        className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+        style={{
+          position: isMobile ? 'fixed' : 'relative',
+          left: isMobile ? (sidebarOpen ? '0' : '-260px') : '0',
+          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          zIndex: 1050,
+          boxShadow: isMobile && sidebarOpen ? '5px 0 30px rgba(0,0,0,0.5)' : 'none'
+        }}
+      >
         <div className="sidebar-brand">
-          <span className="brand-icon">👑</span>
-          <span className="brand-text">Mans Luxury</span>
-          <button className="mobile-close" onClick={() => setSidebarOpen(false)}>✕</button>
+          <div className="brand-text d-flex align-items-center gap-2">
+            <span className="brand-icon">👑</span> Mans Luxury
+          </div>
+          {isMobile && (
+            <button className="mobile-close" onClick={() => setSidebarOpen(false)}>✕</button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -62,50 +90,62 @@ const Layout: React.FC = () => {
               key={item.path}
               to={item.path}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-              onClick={() => window.innerWidth < 768 && setSidebarOpen(false)}
             >
               <span className="nav-icon">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
             </NavLink>
           ))}
         </nav>
-
-        <button className="sidebar-toggle-desktop" onClick={() => setSidebarOpen(!sidebarOpen)}>
-          {sidebarOpen ? '◀' : '▶'}
-        </button>
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="main-area">
+        
+        {/* Topbar */}
         <header className="topbar">
-          <div className="topbar-left">
-            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
-              ☰
-            </button>
-            <h2 className="topbar-title">Mans Luxury Empire</h2>
+          <div className="d-flex align-items-center gap-3">
+            {isMobile && (
+              <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
+                ☰
+              </button>
+            )}
+            <h5 className="topbar-title m-0 d-none d-sm-block">Mans Luxury Empire</h5>
           </div>
+          
           <div className="topbar-right">
-            <button className="btn-secondary cart-btn" onClick={() => setIsCartOpen(true)}>
+            <button className="btn-primary btn-sm cart-btn" onClick={() => setIsCartOpen(true)}>
               🛒 <span className="cart-text">Cart</span>
-              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+              {cartCount > 0 && (
+                <span className="badge rounded-pill bg-danger ms-1" style={{ fontSize: '10px' }}>
+                  {cartCount}
+                </span>
+              )}
             </button>
+
             <div className="user-info">
-              <div className="user-avatar">{user?.full_name?.[0]?.toUpperCase()}</div>
-              <div className="user-details-desktop">
+              <div className="user-avatar shadow-sm">
+                {user?.full_name?.[0]?.toUpperCase()}
+              </div>
+              <div className="user-details user-details-desktop">
                 <span className="user-name">{user?.full_name}</span>
-                <span className="user-role-badge">{roleLabel[user?.role ?? ''] ?? user?.role}</span>
+                <span className="user-role-badge">
+                  {roleLabel[user?.role ?? ''] ?? user?.role}
+                </span>
               </div>
             </div>
-            <button className="btn-logout" onClick={handleLogout}>
-              <span className="logout-icon">🚪</span>
+
+            <button className="btn-logout" onClick={handleLogout} title="Logout">
               <span className="logout-text">Logout</span>
+              <span className="logout-icon text-danger">🚪</span>
             </button>
           </div>
         </header>
 
+        {/* Page Content */}
         <main className="page-content">
           <Outlet />
         </main>
+        
         <CartDrawer />
       </div>
     </div>
@@ -113,3 +153,4 @@ const Layout: React.FC = () => {
 };
 
 export default Layout;
+

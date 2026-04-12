@@ -327,14 +327,14 @@ const OrdersPage: React.FC = () => {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header orders-header">
+      <div className="page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
           <h1 className="page-title">Orders</h1>
           <p className="page-subtitle">View and manage customer orders</p>
         </div>
-        <div className="header-actions">
+        <div className="d-flex flex-wrap gap-2">
           <button 
-            className="btn-secondary" 
+            className="btn btn-outline-warning btn-sm"
             onClick={() => {
               setStatementStart(startDate);
               setStatementEnd(endDate);
@@ -345,41 +345,48 @@ const OrdersPage: React.FC = () => {
           >
             📄 Statement
           </button>
-          <button className="btn-secondary" onClick={printDailySummary}>🖨️ Summary</button>
-          <button className="btn-secondary" onClick={exportToCSV}>📤 Export</button>
-          <button className="btn-primary" onClick={() => navigate('/products')}>+ New Order</button>
+          <button className="btn btn-outline-info btn-sm" onClick={printDailySummary}>🖨️ Summary</button>
+          <button className="btn btn-secondary btn-sm" onClick={exportToCSV}>📤 Export</button>
+          <button className="btn btn-primary btn-sm px-4" onClick={() => navigate('/products')}>+ New Order</button>
         </div>
       </div>
 
-      <div className="filter-bar" style={{ display: 'flex', gap: '15px', marginBottom: '20px', background: 'var(--surface)', padding: '15px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
-        <div className="form-group" style={{ flex: 2, minWidth: '200px', marginBottom: 0 }}>
-          <label style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold' }}>SEARCH</label>
+      <div className="filter-bar row g-3 mb-4 mx-0 p-3 bg-dark-subtle rounded border border-secondary-subtle align-items-end">
+        <div className="col-12 col-md-4">
+          <label className="form-label small fw-bold text-secondary text-uppercase mb-1">Search</label>
           <input 
             type="text" 
-            placeholder="Search by customer or order ID..." 
+            className="form-control bg-dark text-white border-secondary"
+            placeholder="Customer or Order ID..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="form-group" style={{ flex: 1, minWidth: '150px', marginBottom: 0 }}>
-          <label style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold' }}>START DATE</label>
+        <div className="col-6 col-md-2">
+          <label className="form-label small fw-bold text-secondary text-uppercase mb-1">Start Date</label>
           <input 
             type="date" 
+            className="form-control bg-dark text-white border-secondary"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
         </div>
-        <div className="form-group" style={{ flex: 1, minWidth: '150px', marginBottom: 0 }}>
-          <label style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold' }}>END DATE</label>
+        <div className="col-6 col-md-2">
+          <label className="form-label small fw-bold text-secondary text-uppercase mb-1">End Date</label>
           <input 
             type="date" 
+            className="form-control bg-dark text-white border-secondary"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
           />
         </div>
-        <div className="form-group" style={{ flex: 1, minWidth: '150px', marginBottom: 0 }}>
-          <label style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold' }}>STATUS</label>
-          <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+        <div className="col-12 col-md-4">
+          <label className="form-label small fw-bold text-secondary text-uppercase mb-1">Status</label>
+          <select 
+            className="form-select bg-dark text-white border-secondary"
+            value={selectedStatus} 
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
             <option value="">All Statuses</option>
             {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
           </select>
@@ -389,12 +396,18 @@ const OrdersPage: React.FC = () => {
       {error && <div className="alert alert-error">{error}</div>}
 
       {loading ? <div className="loading-text">Loading orders...</div> : (
-        <div className="table-card">
-          <table className="data-table">
-            <thead>
+        <div className="table-card table-responsive">
+          <table className="table table-dark table-hover mb-0 align-middle w-100">
+            <thead className="bg-black text-secondary small text-uppercase fw-bold">
               <tr>
-                <th>Order ID</th><th>Date</th><th>Customer</th><th>Initiated By</th><th>Total</th><th>Status</th><th>Items</th>
-                <th>Actions</th>
+                <th className="ps-3" style={{ minWidth: "120px" }}>Order ID</th>
+                <th style={{ minWidth: "100px" }}>Date</th>
+                <th style={{ minWidth: "150px" }}>Customer</th>
+                <th className="d-none d-lg-table-cell">Initiated By</th>
+                <th style={{ minWidth: "100px" }}>Total</th>
+                <th style={{ minWidth: "120px" }}>Status</th>
+                <th className="d-none d-md-table-cell">Items</th>
+                <th className="text-end pe-3" style={{ minWidth: "150px" }}>Actions</th>
               </tr>
             </thead>
             <tbody>

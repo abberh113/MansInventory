@@ -188,14 +188,14 @@ const UsersPage: React.FC = () => {
           <div className="table-responsive">
             <table className="table table-dark table-hover mb-0 align-middle">
               <thead className="bg-black text-secondary small text-uppercase fw-bold">
-                <tr>
-                  <th className="ps-4 py-3">Member Details</th>
-                  <th>Designation</th>
-                  <th>Confirmation Status</th>
-                  <th>Account Status</th>
-                  <th className="text-end pe-4">Actions</th>
-                </tr>
-              </thead>
+  <tr>
+    <th className="ps-4 py-3">Member Details</th>
+    <th className="d-none d-md-table-cell">Designation</th>
+    <th className="d-none d-md-table-cell">Confirmation Status</th>
+    <th className="d-none d-md-table-cell">Account Status</th>
+    <th className="text-end pe-4">Actions</th>
+  </tr>
+</thead>
               <tbody className="border-top-0">
                 {users.map((u) => (
                   <tr key={u.id} className={`${!u.is_confirmed ? 'opacity-75' : ''} border-secondary-subtle`}>

@@ -205,36 +205,36 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
+      <div className="page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
           <h1 className="page-title">Catalog</h1>
           <p className="page-subtitle">Premium product gallery and management</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="d-flex flex-wrap gap-2">
           <input type="file" multiple accept="image/*" style={{ display: 'none' }} ref={multiFileInputRef} onChange={onMultiFilesSelect} />
           {canEdit && (
             <>
-              <button className="btn-secondary" onClick={() => multiFileInputRef.current?.click()}>🤳 Batch Add</button>
-              <button className="btn-primary" onClick={openCreate}>+ New Product</button>
+              <button className="btn btn-outline-info btn-sm" onClick={() => multiFileInputRef.current?.click()}>🤳 Batch Add</button>
+              <button className="btn btn-primary btn-sm px-3" onClick={openCreate}>+ New Product</button>
             </>
           )}
-          <button className="btn-secondary" onClick={exportToCSV}>📤 Export</button>
+          <button className="btn btn-secondary btn-sm" onClick={exportToCSV}>📤 Export</button>
         </div>
       </div>
 
-      <div className="filter-bar row g-3 mb-4 mx-0 p-3 bg-dark-subtle rounded border border-secondary-subtle align-items-center">
-        <div className="col-md-8">
+      <div className="filter-bar row g-2 g-md-3 mb-4 mx-0 p-3 bg-dark-subtle rounded border border-secondary-subtle align-items-center">
+        <div className="col-12 col-md-8">
           <input 
             type="text" 
-            className="form-control form-control-lg bg-dark text-white border-secondary shadow-sm"
+            className="form-control form-control-md form-control-md-lg bg-dark text-white border-secondary shadow-sm"
             placeholder="Search by name or SKU..." 
             value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)} 
           />
         </div>
-        <div className="col-md-4">
+        <div className="col-12 col-md-4">
           <select 
-            className="form-select form-select-lg bg-dark text-white border-secondary shadow-sm"
+            className="form-select form-select-md form-select-md-lg bg-dark text-white border-secondary shadow-sm"
             value={selectedCategory} 
             onChange={(e) => setSelectedCategory(e.target.value)}
           >

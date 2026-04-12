@@ -58,12 +58,12 @@ const CategoriesPage: React.FC = () => {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
+      <div className="page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
           <h1 className="page-title">Categories</h1>
           <p className="page-subtitle">Organize your products into categories</p>
         </div>
-        {canEdit && <button className="btn-primary" onClick={openCreate}>+ New Category</button>}
+        {canEdit && <button className="btn btn-primary" onClick={openCreate}>+ New Category</button>}
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -71,8 +71,13 @@ const CategoriesPage: React.FC = () => {
       {loading ? <div className="loading-text">Loading categories...</div> : (
         <div className="table-card">
           <table className="data-table">
-            <thead>
-              <tr><th>ID</th><th>Name</th><th>Description</th>{canEdit && <th>Actions</th>}</tr>
+            <thead className="bg-black text-secondary small text-uppercase fw-bold">
+              <tr>
+                <th className="ps-3 text-center" style={{ width: '80px' }}>ID</th>
+                <th>Name</th>
+                <th className="d-none d-md-table-cell">Description</th>
+                {canEdit && <th className="text-end pe-3">Actions</th>}
+              </tr>
             </thead>
             <tbody>
               {categories.length === 0 ? (

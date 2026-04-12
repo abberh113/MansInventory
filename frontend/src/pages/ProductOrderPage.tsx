@@ -58,13 +58,13 @@ const ProductOrderPage: React.FC = () => {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
+      <div className="page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
           <h1 className="page-title">Inventory Orders</h1>
           <p className="page-subtitle">Premium product gallery and management</p>
         </div>
         <div>
-          <button className="btn-secondary" onClick={exportToCSV}>📤 Export Catalog</button>
+          <button className="btn btn-secondary btn-sm" onClick={exportToCSV}>📤 Export Catalog</button>
         </div>
       </div>
 

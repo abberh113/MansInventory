@@ -140,6 +140,17 @@ const ReceiptPage: React.FC = () => {
                     .receipt-a4 { width: 210mm !important; min-height: 297mm !important; }
                     .d-print-none { display: none !important; }
                 }
+
+                @media (max-width: 600px) {
+                    .receipt-page-container { padding: 10px !important; }
+                    #printable-receipt { 
+                        width: 100% !important; 
+                        max-width: 100% !important; 
+                        padding: 15px !important; 
+                    }
+                    .receipt-a4 { padding: 20px !important; }
+                    h1 { font-size: 20px !important; }
+                }
                 .ls-wide { letter-spacing: 1px; }
             `}</style>
         </div>
