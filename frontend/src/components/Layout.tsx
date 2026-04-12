@@ -18,22 +18,8 @@ const Layout: React.FC = () => {
   const { cartCount, setIsCartOpen } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const isLoggingOut = React.useRef(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-  }, [location, isMobile]);
 
   const handleLogout = async () => {
     if (isLoggingOut.current) return;
@@ -60,13 +46,13 @@ const Layout: React.FC = () => {
       <nav className="navbar navbar-expand-lg navbar-dark bg-black border-bottom border-secondary px-3" style={{ height: '70px', zIndex: 1060 }}>
         <div className="container-fluid p-0">
           <div className="d-flex align-items-center gap-3">
+            {/* Native Bootstrap Trigger for Offcanvas */}
             <button 
               className="navbar-toggler d-block d-lg-none border-0 p-0 text-warning" 
               type="button" 
               data-bs-toggle="offcanvas" 
               data-bs-target="#sidebarOffcanvas"
               aria-controls="sidebarOffcanvas"
-              onClick={() => setSidebarOpen(true)}
             >
               <span className="navbar-toggler-icon" style={{ width: '24px' }}></span>
             </button>
@@ -101,8 +87,8 @@ const Layout: React.FC = () => {
 
       <div className="d-flex flex-grow-1 overflow-hidden">
         
-        {/* Sidebar for Desktop (LG and up) */}
-        <aside className="d-none d-lg-flex flex-column bg-black border-end border-secondary p-3 shadow-lg" style={{ width: '260px' }}>
+        {/* Desktop Sidebar (Permanent on large screens) */}
+        <aside className="d-none d-lg-flex flex-column bg-black border-end border-secondary p-3 shadow-lg" style={{ width: '260px', zIndex: 1000 }}>
           <nav className="nav flex-column gap-2">
             {navItems.map((item) => (
               <NavLink
@@ -118,13 +104,19 @@ const Layout: React.FC = () => {
           </nav>
         </aside>
 
-        {/* Mobile Offcanvas Sidebar */}
-        <div className={`offcanvas offcanvas-start bg-black text-white ${sidebarOpen ? 'show' : ''}`} tabIndex={-1} id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel" style={{ visibility: sidebarOpen ? 'visible' : 'hidden', width: '280px' }}>
-          <div className="offcanvas-header border-bottom border-secondary">
+        {/* Standard Bootstrap Offcanvas Sidebar (Mobile/Tablet) */}
+        <div 
+          className="offcanvas offcanvas-start bg-black text-white p-0 border-end border-secondary" 
+          tabIndex={-1} 
+          id="sidebarOffcanvas" 
+          aria-labelledby="sidebarOffcanvasLabel"
+          style={{ width: '280px' }}
+        >
+          <div className="offcanvas-header border-bottom border-secondary bg-black">
             <h5 className="offcanvas-title fw-bold d-flex align-items-center gap-2" id="sidebarOffcanvasLabel">
-              <span>👑</span> MANS LUXURY
+              <span className="fs-4">👑</span> MANS LUXURY
             </h5>
-            <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close" onClick={() => setSidebarOpen(false)}></button>
+            <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
           <div className="offcanvas-body p-3">
              <nav className="nav flex-column gap-2">
@@ -132,8 +124,8 @@ const Layout: React.FC = () => {
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  className={({ isActive }) => `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-white ${isActive ? 'bg-primary fw-bold' : 'opacity-75'}`}
-                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) => `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-white ${isActive ? 'bg-primary fw-bold' : 'opacity-75 hov-warning'}`}
+                  data-bs-dismiss="offcanvas" // Closes sidebar on nav link click
                 >
                   <span className="fs-5">{item.icon}</span>
                   <span>{item.label}</span>
@@ -142,7 +134,6 @@ const Layout: React.FC = () => {
             </nav>
           </div>
         </div>
-        {sidebarOpen && <div className="offcanvas-backdrop fade show" onClick={() => setSidebarOpen(false)}></div>}
 
         {/* Main Content Area */}
         <main className="flex-grow-1 overflow-auto p-3 p-md-4" style={{ backgroundColor: '#0a0a0f' }}>
