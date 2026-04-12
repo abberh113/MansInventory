@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate, Outlet, useLocation, Link } from 'react-router-dom';
+import React from 'react';
+import { NavLink, useNavigate, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import CartDrawer from './CartDrawer';
@@ -17,7 +17,6 @@ const Layout: React.FC = () => {
   const { user, logout } = useAuth();
   const { cartCount, setIsCartOpen } = useCart();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const isLoggingOut = React.useRef(false);
 
