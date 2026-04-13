@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import CartDrawer from './CartDrawer';
 import { logoutUser } from '../services/api';
+import Offcanvas from 'react-bootstrap/Offcanvas';
+import Navbar from 'react-bootstrap/Navbar';
+import Container from 'react-bootstrap/Container';
 
 const roleLabel: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -17,6 +20,7 @@ const Layout: React.FC = () => {
   const { user, logout } = useAuth();
   const { cartCount, setIsCartOpen } = useCart();
   const navigate = useNavigate();
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const isLoggingOut = React.useRef(false);
 
@@ -28,6 +32,9 @@ const Layout: React.FC = () => {
     navigate('/login');
   };
 
+  const handleCloseSidebar = () => setShowSidebar(false);
+  const handleShowSidebar = () => setShowSidebar(true);
+
   const navItems = [
     { label: 'Dashboard', icon: '🏠', path: '/dashboard' },
     { label: 'Products', icon: '📦', path: '/products' },
@@ -38,103 +45,137 @@ const Layout: React.FC = () => {
     ...(user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'hr' ? [{ label: 'Activity Logs', icon: '📊', path: '/audit-logs' }] : []),
   ];
 
+  const SidebarNav = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <nav className="nav flex-column gap-1">
+      {navItems.map((item) => (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-white ${
+              isActive ? 'bg-primary fw-bold shadow-sm' : 'opacity-75'
+            }`
+          }
+          style={{ transition: 'all 0.2s ease' }}
+        >
+          <span className="fs-5">{item.icon}</span>
+          <span>{item.label}</span>
+        </NavLink>
+      ))}
+    </nav>
+  );
+
   return (
     <div className="vh-100 d-flex flex-column overflow-hidden bg-dark">
-      
-      {/* Bootstrap Navbar (Topbar) */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-black border-bottom border-secondary px-3" style={{ height: '70px', zIndex: 1060 }}>
-        <div className="container-fluid p-0">
-          <div className="d-flex align-items-center gap-3">
-            {/* Native Bootstrap Trigger for Offcanvas */}
-            <button 
-              className="navbar-toggler d-block d-lg-none border-0 p-0 text-warning" 
-              type="button" 
-              data-bs-toggle="offcanvas" 
-              data-bs-target="#sidebarOffcanvas"
+
+      {/* ========== TOP NAVBAR ========== */}
+      <Navbar bg="black" variant="dark" className="border-bottom border-secondary px-2 px-md-3 flex-shrink-0" style={{ height: '64px', zIndex: 1060 }}>
+        <Container fluid className="p-0">
+
+          {/* Left: Hamburger + Brand */}
+          <div className="d-flex align-items-center gap-2">
+            {/* Hamburger button — visible only below lg */}
+            <Navbar.Toggle
               aria-controls="sidebarOffcanvas"
-            >
-              <span className="navbar-toggler-icon" style={{ width: '24px' }}></span>
-            </button>
+              className="d-lg-none border-0 p-1"
+              onClick={handleShowSidebar}
+            />
             <Link to="/dashboard" className="navbar-brand fw-bold m-0 d-flex align-items-center gap-2">
               <span className="fs-4">👑</span>
-              <span className="d-none d-sm-inline" style={{ background: 'linear-gradient(135deg, #d4a843, #f0c96a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MANS LUXURY</span>
+              <span
+                className="d-none d-sm-inline fw-bold"
+                style={{
+                  background: 'linear-gradient(135deg, #d4a843, #f0c96a)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                MANS LUXURY
+              </span>
             </Link>
           </div>
 
+          {/* Right: Cart + User + Logout */}
           <div className="d-flex align-items-center gap-2 gap-md-3">
-            <button className="btn btn-warning btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm" onClick={() => setIsCartOpen(true)}>
+            {/* Cart */}
+            <button
+              className="btn btn-warning btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-1 border-0 shadow-sm"
+              onClick={() => setIsCartOpen(true)}
+            >
               🛒 <span className="d-none d-md-inline">Cart</span>
-              {cartCount > 0 && <span className="badge bg-danger rounded-pill">{cartCount}</span>}
+              {cartCount > 0 && (
+                <span className="badge bg-danger rounded-pill ms-1">{cartCount}</span>
+              )}
             </button>
 
-            <div className="d-flex align-items-center gap-2 border-start border-secondary ps-3">
-              <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '36px', height: '36px', fontSize: '14px', background: 'linear-gradient(135deg, #1d1e22, #343a40)', color: 'white' }}>
+            {/* User Avatar + Info */}
+            <div className="d-flex align-items-center gap-2 border-start border-secondary ps-2 ps-md-3">
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm text-white"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  fontSize: '14px',
+                  background: 'linear-gradient(135deg, #1d1e22, #343a40)',
+                }}
+              >
                 {user?.full_name?.[0]?.toUpperCase()}
               </div>
               <div className="d-none d-lg-flex flex-column lh-1">
                 <span className="fw-bold text-white small">{user?.full_name}</span>
-                <span className="text-warning mt-1" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{roleLabel[user?.role ?? ''] ?? user?.role}</span>
+                <span
+                  className="text-warning mt-1"
+                  style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                >
+                  {roleLabel[user?.role ?? ''] ?? user?.role}
+                </span>
               </div>
             </div>
 
-            <button className="btn btn-outline-danger btn-sm rounded-circle p-2 border-0" onClick={handleLogout} title="Logout">
+            {/* Logout */}
+            <button
+              className="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center border-0"
+              style={{ width: '36px', height: '36px' }}
+              onClick={handleLogout}
+              title="Logout"
+            >
               🚪
             </button>
           </div>
-        </div>
-      </nav>
+        </Container>
+      </Navbar>
 
+      {/* ========== BODY: SIDEBAR + MAIN ========== */}
       <div className="d-flex flex-grow-1 overflow-hidden">
-        
-        {/* Desktop Sidebar (Permanent on large screens) */}
-        <aside className="d-none d-lg-flex flex-column bg-black border-end border-secondary p-3 shadow-lg" style={{ width: '260px', zIndex: 1000 }}>
-          <nav className="nav flex-column gap-2">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) => `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-white ${isActive ? 'bg-primary fw-bold shadow-sm' : 'opacity-75 hov-warning'}`}
-                style={{ transition: '0.2s' }}
-              >
-                <span className="fs-5">{item.icon}</span>
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-          </nav>
+
+        {/* Desktop Sidebar — always visible on lg+ */}
+        <aside
+          className="d-none d-lg-flex flex-column bg-black border-end border-secondary p-3 overflow-auto"
+          style={{ width: '260px', flexShrink: 0 }}
+        >
+          <SidebarNav />
         </aside>
 
-        {/* Standard Bootstrap Offcanvas Sidebar (Mobile/Tablet) */}
-        <div 
-          className="offcanvas offcanvas-start bg-black text-white p-0 border-end border-secondary" 
-          tabIndex={-1} 
-          id="sidebarOffcanvas" 
-          aria-labelledby="sidebarOffcanvasLabel"
+        {/* Mobile Offcanvas Sidebar — react-bootstrap handles show/hide */}
+        <Offcanvas
+          show={showSidebar}
+          onHide={handleCloseSidebar}
+          placement="start"
+          className="bg-black text-white border-end border-secondary"
           style={{ width: '280px' }}
         >
-          <div className="offcanvas-header border-bottom border-secondary bg-black">
-            <h5 className="offcanvas-title fw-bold d-flex align-items-center gap-2" id="sidebarOffcanvasLabel">
+          <Offcanvas.Header closeButton closeVariant="white" className="border-bottom border-secondary">
+            <Offcanvas.Title className="fw-bold d-flex align-items-center gap-2">
               <span className="fs-4">👑</span> MANS LUXURY
-            </h5>
-            <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-          </div>
-          <div className="offcanvas-body p-3">
-             <nav className="nav flex-column gap-2">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) => `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-white ${isActive ? 'bg-primary fw-bold' : 'opacity-75 hov-warning'}`}
-                  data-bs-dismiss="offcanvas" // Closes sidebar on nav link click
-                >
-                  <span className="fs-5">{item.icon}</span>
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-        </div>
+            </Offcanvas.Title>
+          </Offcanvas.Header>
+          <Offcanvas.Body className="p-3">
+            <SidebarNav onNavigate={handleCloseSidebar} />
+          </Offcanvas.Body>
+        </Offcanvas>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <main className="flex-grow-1 overflow-auto p-3 p-md-4" style={{ backgroundColor: '#0a0a0f' }}>
           <Outlet />
         </main>
@@ -146,4 +187,3 @@ const Layout: React.FC = () => {
 };
 
 export default Layout;
-
