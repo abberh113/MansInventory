@@ -34,7 +34,6 @@ const Layout: React.FC = () => {
   };
 
   const handleCloseSidebar = () => setShowSidebar(false);
-  const handleShowSidebar = () => setShowSidebar(true);
 
   const navItems = [
     { label: 'Dashboard', icon: '🏠', path: '/dashboard' },
@@ -45,28 +44,6 @@ const Layout: React.FC = () => {
     ...(user?.role === 'super_admin' || user?.role === 'admin' ? [{ label: 'Users', icon: '👥', path: '/users' }] : []),
     ...(user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'hr' ? [{ label: 'Activity Logs', icon: '📊', path: '/audit-logs' }] : []),
   ];
-
-  const SidebarNav = ({ onNavigate, isMini }: { onNavigate?: () => void, isMini?: boolean }) => (
-    <nav className="nav flex-column gap-1">
-      {navItems.map((item) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          onClick={onNavigate}
-          className={({ isActive }) =>
-            `nav-link d-flex align-items-center ${isMini ? 'justify-content-center' : 'gap-3 px-3'} py-2 rounded-3 text-white ${
-              isActive ? 'nav-link-active fw-bold' : 'opacity-75 hover-bg-light'
-            }`
-          }
-          style={{ transition: 'all 0.2s ease', title: isMini ? item.label : '' } as any}
-          title={isMini ? item.label : ''}
-        >
-          <span className="fs-5">{item.icon}</span>
-          {!isMini && <span>{item.label}</span>}
-        </NavLink>
-      ))}
-    </nav>
-  );
 
   return (
     <div className="vh-100 d-flex flex-column overflow-hidden bg-dark">
@@ -175,7 +152,7 @@ const Layout: React.FC = () => {
           }}
         >
           <div className="d-flex flex-column h-100">
-            <SidebarNav isMini={isCollapsed} />
+            <SidebarNav navItems={navItems} isMini={isCollapsed} />
             
             <button
               className="mt-auto btn btn-outline-secondary btn-sm border-0 opacity-50"
@@ -200,7 +177,7 @@ const Layout: React.FC = () => {
             </Offcanvas.Title>
           </Offcanvas.Header>
           <Offcanvas.Body className="p-3">
-            <SidebarNav onNavigate={handleCloseSidebar} />
+            <SidebarNav navItems={navItems} onNavigate={handleCloseSidebar} />
           </Offcanvas.Body>
         </Offcanvas>
 
@@ -214,5 +191,27 @@ const Layout: React.FC = () => {
     </div>
   );
 };
+
+const SidebarNav = ({ navItems, onNavigate, isMini }: { navItems: any[], onNavigate?: () => void, isMini?: boolean }) => (
+  <nav className="nav flex-column gap-1">
+    {navItems.map((item) => (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          `nav-link d-flex align-items-center ${isMini ? 'justify-content-center' : 'gap-3 px-3'} py-2 rounded-3 text-white ${
+            isActive ? 'nav-link-active fw-bold' : 'opacity-75 hover-bg-light'
+          }`
+        }
+        style={{ transition: 'all 0.2s ease' } as any}
+        title={isMini ? item.label : ''}
+      >
+        <span className="fs-5">{item.icon}</span>
+        {!isMini && <span>{item.label}</span>}
+      </NavLink>
+    ))}
+  </nav>
+);
 
 export default Layout;

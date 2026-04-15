@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [token]);
 
-  const login = async (newToken: string, _role: UserRole) => {
+  const login = async (newToken: string) => {
     localStorage.setItem('access_token', newToken);
     setToken(newToken);
     // Explicitly wait for the user profile to be loaded before the navigation happens
@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

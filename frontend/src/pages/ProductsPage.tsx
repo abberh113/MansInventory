@@ -4,15 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
 interface Category { id: number; name: string }
-interface Product { 
-  id: number; 
-  name: string; 
-  sku: string; 
-  price: number; 
-  stock_quantity: number; 
-  category_id: number;
-  image_path?: string;
-}
+import type { Product, ApiError } from '../types';
 
 interface MultiAddItem {
   id: string;
@@ -90,7 +82,10 @@ const ProductsPage: React.FC = () => {
       else await createProduct(fd);
       setShowModal(false); fetchData();
       setSuccess(editItem ? 'Product updated.' : 'Product created.');
-    } catch (err: any) { setError(err?.response?.data?.detail || 'Operation failed.'); }
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Operation failed.');
+    }
   };
 
   const generatePreview = (file: File): Promise<string> => {

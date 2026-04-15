@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-
-interface Category { id: number; name: string; description: string }
+import type { Category, ApiError } from '../types';
 
 const CategoriesPage: React.FC = () => {
   const { user } = useAuth();
@@ -43,8 +42,9 @@ const CategoriesPage: React.FC = () => {
       
       setShowModal(false);
       fetchData();
-    } catch (err: any) { 
-      setError(err?.response?.data?.detail || 'Operation failed. Check if name is unique.'); 
+    } catch (err) { 
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Operation failed. Check if name is unique.'); 
     } finally {
       setSaving(false);
     }
@@ -52,8 +52,13 @@ const CategoriesPage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this category?')) return;
-    try { await deleteCategory(id); fetchData(); }
-    catch (err: any) { setError(err?.response?.data?.detail || 'Delete failed.'); }
+    try { 
+      await deleteCategory(id); 
+      fetchData(); 
+    } catch (err) { 
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Delete failed.'); 
+    }
   };
 
   return (

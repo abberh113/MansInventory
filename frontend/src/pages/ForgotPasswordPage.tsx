@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { requestPasswordReset } from '../services/api';
+import type { ApiError } from '../types';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -16,8 +17,9 @@ const ForgotPasswordPage: React.FC = () => {
     try {
       const res = await requestPasswordReset(email);
       setMessage(res.data.message || 'If an account exists, a reset link has been sent.');
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Something went wrong. Please try again.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginUser } from '../services/api';
+import type { ApiError } from '../types';
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -21,8 +22,9 @@ const LoginPage: React.FC = () => {
       const res = await loginUser(form.email, form.password);
       await login(res.data.access_token, res.data.user_role);
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Invalid email or password.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Invalid email or password.');
       isSubmitting.current = false;
     } finally {
       setLoading(false);

@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getOrders, updateOrderStatus, getProducts, createOrder } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-interface OrderItem { id: number; product_id: number; quantity: number; unit_price: number }
-interface Order { id: number; customer_name: string; status: string; total_amount: number; staff_email: string; items: OrderItem[]; created_at: string; payment_mode: string }
-interface Product { id: number; name: string; price: number; stock_quantity: number; sku: string }
+import type { Order, Product, ApiError } from '../types';
 
 const STATUS_OPTIONS = ['pending', 'processing', 'completed', 'cancelled'];
 
@@ -67,8 +65,9 @@ const OrdersPage: React.FC = () => {
       await updateOrderStatus(editingStatus.id, editingStatus.status);
       setEditingStatus(null);
       fetchData();
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Status update failed.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Status update failed.');
     }
   };
 
@@ -85,9 +84,11 @@ const OrdersPage: React.FC = () => {
     setNewOrder({ ...newOrder, items });
   };
 
-  const handleItemChange = (index: number, field: string, value: any) => {
+  const handleItemChange = (index: number, field: string, value: string | number) => {
     const items = [...newOrder.items];
-    (items[index] as any)[field] = value;
+    const item = { ...items[index] };
+    (item as Record<string, string | number>)[field] = value;
+    items[index] = item as any; // Cast back to the specific interface type if necessary, or better yet, fix the interface
     setNewOrder({ ...newOrder, items });
   };
 
@@ -105,8 +106,9 @@ const OrdersPage: React.FC = () => {
       
       // Redirect to Receipt Page
       navigate(`/receipt/${savedOrder.id}`);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Order creation failed.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Order creation failed.');
     }
   };
 

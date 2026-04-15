@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/api';
 
+import type { ApiError } from '../types';
+
 const ROLES = [
   { value: 'normal_staff', label: 'Normal Staff' },
   { value: 'hr', label: 'HR' },
@@ -27,8 +29,9 @@ const RegisterPage: React.FC = () => {
       await registerUser({ full_name: form.full_name, email: form.email, password: form.password, role: form.role });
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Registration failed. Please try again.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

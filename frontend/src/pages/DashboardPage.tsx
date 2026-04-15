@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getProducts, getCategories, getOrders, getUsers } from '../services/api';
 import { Link } from 'react-router-dom';
-import { Container, Row, Col, Card, Badge, ListGroup, Placeholder } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, ListGroup } from 'react-bootstrap';
 
 interface Stats { products: number; categories: number; orders: number; users: number }
 interface Product { id: number; name: string; stock_quantity: number; sku: string }
@@ -71,7 +71,15 @@ const DashboardPage: React.FC = () => {
         <Row className="g-4 mt-2">
           {[1, 2, 3, 4].map(i => (
             <Col key={i} xs={12} sm={6} lg={3}>
-              <Card className="stat-card skeleton border-0 shadow-sm" style={{ height: '140px' }} />
+              <Card className="stat-card border-0 shadow-sm" style={{ height: '140px', background: 'var(--surface)' }}>
+                <Card.Body className="d-flex align-items-center gap-4">
+                  <div className="skeleton rounded-4" style={{ width: '56px', height: '56px' }} />
+                  <div className="flex-grow-1">
+                    <div className="skeleton mb-2" style={{ width: '40%', height: '24px' }} />
+                    <div className="skeleton" style={{ width: '70%', height: '12px' }} />
+                  </div>
+                </Card.Body>
+              </Card>
             </Col>
           ))}
         </Row>
@@ -190,12 +198,12 @@ const DashboardPage: React.FC = () => {
                       <div className="p-3 rounded-4 bg-white bg-opacity-5 border border-white border-opacity-5 h-100">
                         <h6 className="text-primary x-small text-uppercase fw-bold mb-3">System Health</h6>
                         <div className="d-flex align-items-center gap-2 mb-2">
-                          <div className="rounded-circle bg-success shadow-sm" style={{ width: '8px', height: '8px' }}></div>
-                          <span className="x-small text-muted">Authentication Layer: ACTIVE</span>
+                          <div className="rounded-circle bg-success shadow-sm animate-pulse" style={{ width: '8px', height: '8px' }}></div>
+                          <span className="x-small text-muted">Authentication Layer: <span className="text-white fw-bold">ACTIVE</span></span>
                         </div>
                         <div className="d-flex align-items-center gap-2">
-                          <div className="rounded-circle bg-success shadow-sm" style={{ width: '8px', height: '8px' }}></div>
-                          <span className="x-small text-muted">PostgreSQL Engine: STABLE</span>
+                          <div className="rounded-circle bg-success shadow-sm animate-pulse" style={{ width: '8px', height: '8px', animationDelay: '0.5s' }}></div>
+                          <span className="x-small text-muted">PostgreSQL Engine: <span className="text-white fw-bold">STABLE</span></span>
                         </div>
                       </div>
                     </Col>

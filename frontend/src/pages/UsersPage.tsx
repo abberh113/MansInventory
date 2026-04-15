@@ -2,14 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getUsers, createUser, updateUser, deleteUser, resetUserPassword, confirmUser, toggleUserActive } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-interface User {
-  id: number;
-  full_name: string;
-  email: string;
-  role: string;
-  is_confirmed: boolean;
-  is_active: boolean;
-}
+import type { User, ApiError } from '../types';
 
 const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -50,8 +43,9 @@ const UsersPage: React.FC = () => {
       setShowModal(false);
       setForm({ full_name: '', email: '', password: '', role: 'normal_staff' });
       fetchUsers();
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Failed to create user.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Failed to create user.');
     }
   };
 
@@ -64,8 +58,9 @@ const UsersPage: React.FC = () => {
       setSuccess('User account updated.');
       setShowEditModal(false);
       fetchUsers();
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Update failed.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Update failed.');
     }
   };
 
@@ -89,8 +84,9 @@ const UsersPage: React.FC = () => {
       await confirmUser(userId);
       setSuccess('Member account confirmed and active.');
       fetchUsers();
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Confirmation failed.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Confirmation failed.');
     }
   };
 
@@ -100,8 +96,9 @@ const UsersPage: React.FC = () => {
       const res = await toggleUserActive(userId);
       setSuccess(res.data.message);
       fetchUsers();
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Action failed.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Action failed.');
     }
   };
 
@@ -126,8 +123,9 @@ const UsersPage: React.FC = () => {
       await deleteUser(userId);
       setSuccess('User deleted.');
       fetchUsers();
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Failed to delete user.');
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Failed to delete user.');
     }
   };
 

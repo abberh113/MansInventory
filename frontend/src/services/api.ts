@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { User } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -38,7 +39,7 @@ export const confirmPasswordReset = (token: string, new_password: string) =>
 // Users
 export const getUsers = () => API.get('/api/v1/users/');
 export const getMyProfile = () => API.get('/api/v1/users/me');
-export const createUser = (data: any) => API.post('/api/v1/users/', data);
+export const createUser = (data: Partial<User> & { password?: string }) => API.post('/api/v1/users/', data);
 export const updateUser = (userId: number, data: object) => API.put(`/api/v1/users/${userId}`, data);
 export const deleteUser = (userId: number) => API.delete(`/api/v1/users/${userId}`);
 export const resetUserPassword = (userId: number, password: string) => 
