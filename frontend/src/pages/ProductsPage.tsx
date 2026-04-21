@@ -248,9 +248,12 @@ const ProductsPage: React.FC = () => {
            {filteredProducts.map((p) => (
              <div key={p.id} className="product-card">
                <div className="product-card-image" onClick={() => setViewProduct(p)}>
-                 {p.image_path ? (
-                   <img src={`${API_BASE_URL}${p.image_path}`} alt={p.name} />
-                 ) : (
+                  {p.image_path ? (
+                    <img 
+                      src={p.image_path.startsWith('http') ? p.image_path : `${API_BASE_URL}${p.image_path}`} 
+                      alt={p.name} 
+                    />
+                  ) : (
                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', fontSize: '40px' }}>📦</div>
                  )}
                  {p.stock_quantity <= 0 ? (
@@ -411,7 +414,10 @@ const ProductsPage: React.FC = () => {
             <div className="product-detail-view">
               <div className="product-detail-image">
                 {viewProduct.image_path ? (
-                  <img src={`${API_BASE_URL}${viewProduct.image_path}`} alt="detail" />
+                  <img 
+                    src={viewProduct.image_path.startsWith('http') ? viewProduct.image_path : `${API_BASE_URL}${viewProduct.image_path}`} 
+                    alt="detail" 
+                  />
                 ) : <div style={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#111', fontSize:'80px' }}>📦</div>}
               </div>
               <div className="product-detail-info">

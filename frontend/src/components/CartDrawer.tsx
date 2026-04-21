@@ -59,7 +59,10 @@ const CartDrawer: React.FC = () => {
               <div key={item.product.id} className="cart-item">
                 <div className="cart-item-img">
                   {item.product.image_path ? (
-                    <img src={`${API_BASE_URL}${item.product.image_path}`} alt="cart-p" />
+                    <img 
+                      src={item.product.image_path.startsWith('http') ? item.product.image_path : `${API_BASE_URL}${item.product.image_path}`} 
+                      alt="cart-p" 
+                    />
                   ) : <div style={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#111', fontSize:'20px' }}>📦</div>}
                 </div>
                 <div className="cart-item-details">

@@ -65,20 +65,13 @@ app.add_middleware(
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
-    origin = request.headers.get("origin", "")
-    headers = {}
-    if origin in ALLOWED_ORIGINS:
-        headers["Access-Control-Allow-Origin"] = origin
-        headers["Access-Control-Allow-Credentials"] = "true"
-    
-    # LOG THE ACTUAL ERROR TO THE SERVER OUTPUT (Cloud Run logs)
+    # LOG THE ACTUAL ERROR TO THE SERVER OUTPUT (Cloud Run logs / Vercel)
     print(f"❌ SERVER ERROR on {request.method} {request.url}")
     print(f"Traceback: {''.join(traceback.format_exception(None, exc, exc.__traceback__))}")
     
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error", "error_type": type(exc).__name__},
-        headers=headers,
     )
 
 # Serve uploaded files (only if directory exists)

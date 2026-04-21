@@ -2,16 +2,20 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Mans Luxury Empire"
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:Abberh113@localhost:5432/mans_inventory"
-    SECRET_KEY: str = "mans-luxury-super-secret-key-change-in-production"
+    DATABASE_URL: str = ""
+    SECRET_KEY: str = "your-secret-key-for-local-dev"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    
+    # Supabase Storage Settings
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
     
     # Email Settings (for notifications)
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = "mansluxurystore@gmail.com"
-    SMTP_PASS: str = "wwmg axea huqx lali"
+    SMTP_PASS: str = ""
     EMAILS_FROM_EMAIL: str = "Mans Luxury Empire <mansluxurystore@gmail.com>"
     
     BACKEND_CORS_ORIGINS: list[str] = [
