@@ -61,17 +61,39 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Custom exception handler to ensure CORS headers are always present on errors
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    print(f"⚠️ HTTP Error on {request.method} {request.url}: {exc.status_code} {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    print(f"❌ VALIDATION ERROR on {request.method} {request.url}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": exc.body},
+    )
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
-    # LOG THE ACTUAL ERROR TO THE SERVER OUTPUT (Cloud Run logs / Vercel)
+    # LOG THE ACTUAL ERROR TO THE SERVER OUTPUT
     print(f"❌ SERVER ERROR on {request.method} {request.url}")
     print(f"Traceback: {''.join(traceback.format_exception(None, exc, exc.__traceback__))}")
     
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error", "error_type": type(exc).__name__},
+        content={
+            "detail": "Internal server error", 
+            "error_type": type(exc).__name__,
+            "error_msg": str(exc)
+        },
     )
 
 # Serve uploaded files (only if directory exists)

@@ -3,7 +3,7 @@ import shutil
 import csv
 import io
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Request
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Request, BackgroundTasks
 from typing import List, Optional
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -139,6 +139,7 @@ async def list_products(
 
 @router.post("/products", response_model=ProductRead)
 async def create_product(
+    background_tasks: BackgroundTasks,
     name: str = Form(...),
     sku: str = Form(...),
     price: float = Form(...),
@@ -182,18 +183,27 @@ async def create_product(
     await session.commit()
     await session.refresh(item)
     
-    # Notify all users
-    await notify_all_users(
-        "📦 New Product Added",
-        f"Product '{item.name}' (SKU: {item.sku}) has been added to the catalog at ₦{item.price:,.2f}.",
-        session
-    )
+    # Notify all users (Background)
+    try:
+        background_tasks.add_task(
+            notify_all_users,
+            "📦 New Product Added",
+            f"Product '{item.name}' (SKU: {item.sku}) has been added to the catalog at ₦{item.price:,.2f}.",
+            session
+        )
+    except Exception as e:
+        print(f"⚠️ Failed to queue notification: {e}")
     
-    await create_audit_log(
-        session, current_user, "PRODUCT_CREATED", 
-        details=f"Added product '{item.name}' (SKU: {item.sku})", 
-        request=request
-    )
+    try:
+        background_tasks.add_task(
+            create_audit_log,
+            session, current_user, "PRODUCT_CREATED", 
+            details=f"Added product '{item.name}' (SKU: {item.sku})", 
+            request=request
+        )
+    except Exception as e:
+        print(f"⚠️ Failed to queue audit log: {e}")
+    
     return item
 
 @router.put("/products/{product_id}", response_model=ProductRead)

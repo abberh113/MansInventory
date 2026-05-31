@@ -15,6 +15,23 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor for better error handling
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.warn('⚠️ Session expired or invalid token. Redirecting to login...');
+      // Optional: localStorage.clear(); window.location.href = '/login';
+    }
+    
+    const status = error.response?.status;
+    const detail = error.response?.data?.detail;
+    console.error(`❌ API Error [${status}]:`, detail || error.message);
+    
+    return Promise.reject(error);
+  }
+);
+
 // Auth
 export const loginUser = (email: string, password: string) => {
   const form = new URLSearchParams();

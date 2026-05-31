@@ -2,7 +2,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
-from typing import List
+from typing import List, Optional
 import asyncio
 
 async def send_email(subject: str, recipients: List[str], body: str):
@@ -33,15 +33,24 @@ async def send_email(subject: str, recipients: List[str], body: str):
     loop.run_in_executor(None, _send)
     return True
 
-async def notify_admins(subject: str, body: str, session, additional_emails: List[str] = None):
+async def notify_admins(subject: str, body: str, session: Optional[any] = None, additional_emails: List[str] = None):
     # Helper to get all Admin, SuperAdmin, HR emails
     from app.models.user import User, UserRole
     from sqlmodel import select
+    from app.db.session import async_session
     
-    statement = select(User).where(User.role.in_([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.HR]))
-    result = await session.execute(statement)
-    admins = result.scalars().all()
-    emails = [admin.email for admin in admins]
+    async def _get_emails(sess):
+        statement = select(User).where(User.role.in_([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.HR]))
+        res = await sess.execute(statement)
+        admins = res.scalars().all()
+        return [admin.email for admin in admins]
+
+    emails = []
+    if session:
+        emails = await _get_emails(session)
+    else:
+        async with async_session() as new_session:
+            emails = await _get_emails(new_session)
     
     if additional_emails:
         emails.extend(additional_emails)
@@ -50,15 +59,30 @@ async def notify_admins(subject: str, body: str, session, additional_emails: Lis
     emails = list(set(emails))
     
     if emails:
+        # Use a task to ensure the request isn't blocked by SMTP
         asyncio.create_task(send_email(subject, emails, body))
 
-async def notify_all_users(subject: str, body: str, session):
+async def notify_all_users(subject: str, body: str, session: Optional[any] = None):
     from app.models.user import User
     from sqlmodel import select
+    from app.db.session import async_session
     
-    result = await session.execute(select(User))
-    users = result.scalars().all()
-    emails = [u.email for u in users]
+    async def _get_emails(sess):
+        result = await sess.execute(select(User))
+        users = result.scalars().all()
+        return [u.email for u in users]
+
+    emails = []
+    if session:
+        try:
+            emails = await _get_emails(session)
+        except:
+            # Session might be closed if called as background task
+            async with async_session() as new_session:
+                emails = await _get_emails(new_session)
+    else:
+        async with async_session() as new_session:
+            emails = await _get_emails(new_session)
     
     if emails:
         asyncio.create_task(send_email(subject, emails, body))
