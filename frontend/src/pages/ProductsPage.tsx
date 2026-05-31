@@ -57,7 +57,8 @@ const ProductsPage: React.FC = () => {
   const openCreate = () => {
     setEditItem(null);
     const firstCat = categories.length > 0 ? String(categories[0].id) : '';
-    setForm({ name: '', sku: '', price: '', stock_quantity: '', category_id: firstCat });
+    const autoSku = `SKU-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    setForm({ name: '', sku: autoSku, price: '', stock_quantity: '', category_id: firstCat });
     setSelectedFile(null);
     setShowModal(true);
   };
@@ -75,17 +76,51 @@ const ProductsPage: React.FC = () => {
     const fd = new FormData();
     fd.append('name', form.name); fd.append('sku', form.sku); fd.append('price', form.price);
     fd.append('stock_quantity', form.stock_quantity); fd.append('category_id', form.category_id);
-    if (selectedFile) fd.append('image', selectedFile);
-
     try {
+      if (selectedFile) {
+        setSuccess('Optimizing image...');
+        const compressed = await compressImage(selectedFile, 0.6);
+        fd.append('image', compressed, 'product.jpg');
+      }
+
       if (editItem) await updateProduct(editItem.id, fd);
       else await createProduct(fd);
-      setShowModal(false); fetchData();
+      
+      setShowModal(false); 
+      fetchData();
       setSuccess(editItem ? 'Product updated.' : 'Product created.');
     } catch (err) {
       const apiErr = err as ApiError;
-      setError(typeof apiErr.response?.data?.detail === 'string' ? apiErr.response.data.detail : 'Operation failed.');
+      const msg = apiErr.response?.data?.detail || apiErr.response?.data?.error_msg || 'Operation failed.';
+      setError(typeof msg === 'string' ? msg : 'Operation failed.');
     }
+  };
+
+  const compressImage = (file: File, quality = 0.7, maxWidth = 1200): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+          }, 'image/jpeg', quality);
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const generatePreview = (file: File): Promise<string> => {
@@ -106,7 +141,7 @@ const ProductsPage: React.FC = () => {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
         };
         img.src = e.target?.result as string;
       };
@@ -167,8 +202,10 @@ const ProductsPage: React.FC = () => {
       fd.append('price', item.price || '0');
       fd.append('stock_quantity', item.stock_quantity);
       fd.append('category_id', item.category_id);
-      fd.append('image', item.file);
+      // Optimize image before upload
       try {
+        const compressed = await compressImage(item.file, 0.5);
+        fd.append('image', compressed, 'bulk_item.jpg');
         await createProduct(fd);
         count++;
       } catch (err) { console.error('Failed', item.name, err); }

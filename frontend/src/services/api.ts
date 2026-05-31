@@ -21,12 +21,11 @@ API.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.warn('⚠️ Session expired or invalid token. Redirecting to login...');
-      // Optional: localStorage.clear(); window.location.href = '/login';
     }
     
     const status = error.response?.status;
-    const detail = error.response?.data?.detail;
-    console.error(`❌ API Error [${status}]:`, detail || error.message);
+    const data = error.response?.data;
+    console.error(`❌ API Error [${status}]:`, data || error.message);
     
     return Promise.reject(error);
   }
