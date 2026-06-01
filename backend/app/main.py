@@ -39,7 +39,8 @@ async def run_migrations():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Pro Tip: Only run migrations manually to keep Vercel startups fast!
+    # Pro Tip: Run migrations automatically on startup to ensure schema is always up to date
+    await run_migrations()
     yield
 
 app = FastAPI(

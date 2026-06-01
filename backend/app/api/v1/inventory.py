@@ -150,6 +150,11 @@ async def create_product(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(PermissionChecker([UserRole.ADMIN, UserRole.SUPER_ADMIN]))
 ):
+    # Check if SKU exists
+    existing_sku = await session.execute(select(Product).where(Product.sku == sku))
+    if existing_sku.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail=f"Product with SKU '{sku}' already exists")
+
     # Save image if provided
     image_path = None
     if image and supabase:
@@ -169,42 +174,80 @@ async def create_product(
             print(f"✅ Successfully uploaded image: {image_path}")
         except Exception as e:
             print(f"❌ Failed to upload image to Supabase: {type(e).__name__}: {e}")
+            # Don't fail the whole product creation if image upload fails, but log it
             image_path = None
     elif image:
-        print("⚠️ Supabase credentials missing. Image upload skipped.")
+        print("⚠️ Supabase credentials missing or client not initialized. Image upload skipped.")
 
-    item = Product(
-        name=name, sku=sku, price=price, 
-        stock_quantity=stock_quantity, 
-        category_id=category_id, 
-        image_path=image_path
-    )
-    session.add(item)
-    await session.commit()
-    await session.refresh(item)
-    
-    # Notify all users (Background)
     try:
-        background_tasks.add_task(
-            notify_all_users,
-            "📦 New Product Added",
-            f"Product '{item.name}' (SKU: {item.sku}) has been added to the catalog at ₦{item.price:,.2f}.",
-            session
+        item = Product(
+            name=name, sku=sku, price=price, 
+            stock_quantity=stock_quantity, 
+            category_id=category_id, 
+            image_path=image_path
         )
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
     except Exception as e:
-        print(f"⚠️ Failed to queue notification: {e}")
+        await session.rollback()
+        print(f"❌ Database error creating product: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save product: {str(e)}")
     
-    try:
-        background_tasks.add_task(
-            create_audit_log,
-            session, current_user, "PRODUCT_CREATED", 
-            details=f"Added product '{item.name}' (SKU: {item.sku})", 
-            request=request
-        )
-    except Exception as e:
-        print(f"⚠️ Failed to queue audit log: {e}")
+    # Notify all users & Create Audit Log (Background)
+    # We DON'T pass the session to background tasks because it gets closed
+    background_tasks.add_task(notify_all_product_creation, item.name, item.sku, item.price)
+    background_tasks.add_task(create_audit_log_background, current_user.id, "PRODUCT_CREATED", f"Added product '{item.name}' (SKU: {item.sku})", request.client.host if request else "N/A")
     
     return item
+
+@router.post("/products/bulk")
+async def bulk_upload_products(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    request: Request = None,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(PermissionChecker([UserRole.ADMIN, UserRole.SUPER_ADMIN]))
+):
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    
+    content = await file.read()
+    decoded = content.decode('utf-8').splitlines()
+    reader = csv.DictReader(decoded)
+    
+    products_added = 0
+    errors = []
+    
+    for row in reader:
+        try:
+            sku = row.get('sku')
+            if not sku: continue
+            
+            # Check SKU
+            stmt = select(Product).where(Product.sku == sku)
+            res = await session.execute(stmt)
+            if res.scalar_one_or_none():
+                errors.append(f"SKU {sku} already exists")
+                continue
+                
+            p = Product(
+                name=row.get('name', 'Unnamed Product'),
+                sku=sku,
+                price=float(row.get('price', 0)),
+                stock_quantity=int(row.get('stock_quantity', 0)),
+                category_id=int(row.get('category_id', 1))
+            )
+            session.add(p)
+            products_added += 1
+        except Exception as e:
+            errors.append(f"Row {reader.line_num} error: {str(e)}")
+            
+    if products_added > 0:
+        await session.commit()
+        background_tasks.add_task(create_audit_log_background, current_user.id, "BULK_PRODUCT_UPLOAD", f"Uploaded {products_added} products via CSV", request.client.host if request else "N/A")
+    
+    return {"status": "success", "added": products_added, "errors": errors}
 
 @router.put("/products/{product_id}", response_model=ProductRead)
 async def update_product(
@@ -224,8 +267,13 @@ async def update_product(
     if not prod:
         raise HTTPException(status_code=404, detail="Product not found")
     
+    if sku and sku != prod.sku:
+        existing_sku = await session.execute(select(Product).where(Product.sku == sku))
+        if existing_sku.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail=f"Product with SKU '{sku}' already exists")
+        prod.sku = sku
+
     if name is not None: prod.name = name
-    if sku is not None: prod.sku = sku
     if price is not None: prod.price = price
     if stock_quantity is not None: prod.stock_quantity = stock_quantity
     if category_id is not None: prod.category_id = category_id
@@ -250,26 +298,21 @@ async def update_product(
     elif image:
         print("⚠️ Supabase credentials missing. Image upload skipped.")
 
-    session.add(prod)
-    await session.commit()
-    await session.refresh(prod)
+    try:
+        session.add(prod)
+        await session.commit()
+        await session.refresh(prod)
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update product: {str(e)}")
     
-    # Notify all users
-    await notify_all_users(
-        "📦 Product Updated",
-        f"The product '{prod.name}' details were updated by {current_user.full_name}.",
-        session
-    )
+    background_tasks.add_task(create_audit_log_background, current_user.id, "PRODUCT_UPDATED", f"Updated product '{prod.name}' (SKU: {prod.sku})", request.client.host if request else "N/A")
     
-    await create_audit_log(
-        session, current_user, "PRODUCT_UPDATED", 
-        details=f"Updated product '{prod.name}' (SKU: {prod.sku})", 
-        request=request
-    )
     return prod
 
 @router.delete("/products/{product_id}")
 async def delete_product(product_id: int,
+                         request: Request = None,
                          session: AsyncSession = Depends(get_session),
                          current_user: User = Depends(PermissionChecker([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
     result = await session.execute(select(Product).where(Product.id == product_id))
@@ -278,6 +321,7 @@ async def delete_product(product_id: int,
         raise HTTPException(status_code=404, detail="Product not found")
     
     name = prod.name
+    sku = prod.sku
     # Delete image
     if prod.image_path:
         if "supabase.co" in prod.image_path and supabase:
@@ -288,23 +332,50 @@ async def delete_product(product_id: int,
                 print(f"✅ Deleted image from Supabase: {file_name}")
             except Exception as e:
                 print(f"⚠️ Failed to delete image from Supabase: {e}")
-        else:
-            # Fallback for local files
-            old_path = prod.image_path.lstrip("/").replace("/", os.sep)
-            if os.path.exists(old_path):
-                try: os.remove(old_path)
-                except: pass
 
     await session.delete(prod)
     await session.commit()
     
-    # Notify all users
-    await notify_all_users(
-        "📦 Product Discontinued",
-        f"The product '{name}' has been removed from the inventory by {current_user.full_name}.",
-        session
-    )
+    background_tasks = BackgroundTasks() # We can create one manually or use Depends
+    # For deletes, simple audit log is enough
+    await create_audit_log(session, current_user, "PRODUCT_DELETED", details=f"Deleted product '{name}' (SKU: {sku})", request=request)
+    
     return {"detail": "Product deleted"}
+
+# Helper Background Task Functions to avoid session closure crashes
+async def notify_all_product_creation(name: str, sku: str, price: float):
+    from app.db.session import async_session
+    try:
+        async with async_session() as session:
+            await notify_all_users(
+                "📦 New Product Added",
+                f"Product '{name}' (SKU: {sku}) has been added to the catalog at ₦{price:,.2f}.",
+                session
+            )
+    except Exception as e:
+        print(f"⚠️ Background notification failed: {e}")
+
+async def create_audit_log_background(user_id: int, action: str, details: str, ip_address: str):
+    from app.db.session import async_session
+    from app.models.user import User
+    try:
+        async with async_session() as session:
+            user = await session.get(User, user_id)
+            if user:
+                # We need a dummy request or just call a simpler version
+                from app.models.audit import AuditLog
+                new_log = AuditLog(
+                    user_id=user.id,
+                    full_name=user.full_name,
+                    email=user.email,
+                    action=action,
+                    details=details,
+                    ip_address=ip_address
+                )
+                session.add(new_log)
+                await session.commit()
+    except Exception as e:
+        print(f"⚠️ Background audit log failed: {e}")
 
 # ----------------------
 # ORDERS
