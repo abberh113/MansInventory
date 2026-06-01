@@ -1,7 +1,6 @@
 import os
-import shutil
 import csv
-import io
+import asyncio
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Request, BackgroundTasks
 from typing import List, Optional
@@ -24,8 +23,32 @@ router = APIRouter()
 
 # Initialize Supabase client
 supabase: Client = None
-if settings.SUPABASE_URL and settings.SUPABASE_KEY:
-    supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+try:
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+        print(f"✅ Supabase client initialized ({settings.SUPABASE_URL})")
+except Exception as e:
+    print(f"⚠️ Supabase client failed to initialize: {e}")
+    supabase = None
+
+
+# ---- Thread-safe supabase upload helper ----
+# supabase-py uses synchronous httpx internally. Calling it directly inside
+# an async function blocks the event loop (fatal on Vercel serverless).
+# asyncio.to_thread() runs it in a thread pool, keeping the loop clean.
+async def _supabase_upload(file_name: str, content: bytes, content_type: str) -> str | None:
+    """Upload file to Supabase Storage in a thread and return public URL."""
+    if not supabase:
+        return None
+    def _do_upload():
+        supabase.storage.from_("products").upload(
+            path=file_name,
+            file=content,
+            file_options={"content-type": content_type or "application/octet-stream"}
+        )
+        return supabase.storage.from_("products").get_public_url(file_name)
+    
+    return await asyncio.to_thread(_do_upload)
 
 
 # ----------------------
@@ -163,15 +186,10 @@ async def create_product(
             file_name = f"{sku}_{int(datetime.now().timestamp())}.{file_ext}"
             content = await image.read()
             
-            # Upload to Supabase bucket 'products'
-            storage_res = supabase.storage.from_("products").upload(
-                path=file_name,
-                file=content,
-                file_options={"content-type": image.content_type}
-            )
-            # Get Public URL
-            image_path = supabase.storage.from_("products").get_public_url(file_name)
-            print(f"✅ Successfully uploaded image: {image_path}")
+            # Use helper to upload in a thread pool (prevent blocking loop)
+            image_path = await _supabase_upload(file_name, content, image.content_type)
+            if image_path:
+                print(f"✅ Successfully uploaded image: {image_path}")
         except Exception as e:
             print(f"❌ Failed to upload image to Supabase: {type(e).__name__}: {e}")
             # Don't fail the whole product creation if image upload fails, but log it
@@ -251,6 +269,7 @@ async def bulk_upload_products(
 
 @router.put("/products/{product_id}", response_model=ProductRead)
 async def update_product(
+    background_tasks: BackgroundTasks,
     product_id: int,
     name: Optional[str] = Form(None),
     sku: Optional[str] = Form(None),
@@ -284,15 +303,11 @@ async def update_product(
             file_name = f"{prod.sku}_{int(datetime.now().timestamp())}.{file_ext}"
             content = await image.read()
             
-            # Upload to Supabase bucket 'products'
-            storage_res = supabase.storage.from_("products").upload(
-                path=file_name,
-                file=content,
-                file_options={"content-type": image.content_type}
-            )
-            # Get Public URL
-            prod.image_path = supabase.storage.from_("products").get_public_url(file_name)
-            print(f"✅ Successfully uploaded image: {prod.image_path}")
+            # Use helper to upload in a thread pool
+            new_path = await _supabase_upload(file_name, content, image.content_type)
+            if new_path:
+                prod.image_path = new_path
+                print(f"✅ Successfully updated image: {prod.image_path}")
         except Exception as e:
             print(f"❌ Failed to upload image to Supabase: {type(e).__name__}: {e}")
     elif image:
@@ -312,6 +327,7 @@ async def update_product(
 
 @router.delete("/products/{product_id}")
 async def delete_product(product_id: int,
+                         background_tasks: BackgroundTasks,
                          request: Request = None,
                          session: AsyncSession = Depends(get_session),
                          current_user: User = Depends(PermissionChecker([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
@@ -325,19 +341,24 @@ async def delete_product(product_id: int,
     # Delete image
     if prod.image_path:
         if "supabase.co" in prod.image_path and supabase:
-            try:
-                # Extract filename from URL (assumes filename is at the end)
-                file_name = prod.image_path.split("/")[-1]
-                supabase.storage.from_("products").remove([file_name])
-                print(f"✅ Deleted image from Supabase: {file_name}")
-            except Exception as e:
-                print(f"⚠️ Failed to delete image from Supabase: {e}")
+            def _do_remove():
+                try:
+                    # Extract filename from URL (assumes filename is at the end)
+                    file_name = prod.image_path.split("/")[-1]
+                    supabase.storage.from_("products").remove([file_name])
+                    return file_name
+                except Exception as e:
+                    print(f"⚠️ Failed to delete image from Supabase: {e}")
+                    return None
+            
+            # Run removal in a thread pool
+            removed_file = await asyncio.to_thread(_do_remove)
+            if removed_file:
+                print(f"✅ Deleted image from Supabase: {removed_file}")
 
     await session.delete(prod)
     await session.commit()
     
-    background_tasks = BackgroundTasks() # We can create one manually or use Depends
-    # For deletes, simple audit log is enough
     await create_audit_log(session, current_user, "PRODUCT_DELETED", details=f"Deleted product '{name}' (SKU: {sku})", request=request)
     
     return {"detail": "Product deleted"}

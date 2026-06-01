@@ -14,7 +14,7 @@ from app.services.auth import get_password_hash
 # Credentials from user
 NAME = "Super Admin"
 EMAIL = "abberh113@gmail.com"
-PASSWORD = "Abberh113$"
+PASSWORD = "YOUR_PASSWORD_HERE"
 
 async def seed_super_admin():
     print(f"Connecting to database to seed Super Admin...")

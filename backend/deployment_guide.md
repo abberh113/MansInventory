@@ -6,8 +6,7 @@ This guide outlines the steps to deploy the application with the optimized backe
 - Create a new project in [Supabase](https://supabase.com/).
 - Go to **Project Settings** > **Database**.
 - Copy the **Connection String** (use the **Transaction Pooler** URL, usually on port 6543).
-- **IMPORTANT**: Ensure the string starts with `postgresql+asyncpg://` instead of `postgresql://` or `postgres://` to work with the backend's async driver.
-- Use your password: `MansInventory113$` (e.g., `postgresql+asyncpg://postgres:MansInventory113$@[PROJECT_REF].pooler.supabase.com:6543/postgres`).
+- **IMPORTANT**: Ensure the string starts with `postgresql+asyncpg://user:password@[PROJECT_REF].pooler.supabase.com:6543/postgres`).
 - Toggle off `sslmode=disable` if using the pooler, or follow Supabase guides for SSL.
 
 ## 2. Backend: Google Cloud Run

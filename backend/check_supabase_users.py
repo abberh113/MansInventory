@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 
 # Supabase URL with encoded password
-DATABASE_URL = "postgresql+asyncpg://postgres.mbqmkeetmvwjodmkgmoz:MansInventory113%24@aws-1-eu-west-2.pooler.supabase.com:6543/postgres"
+DATABASE_URL = "postgresql+asyncpg://user:password@aws-1-eu-west-2.pooler.supabase.com:6543/postgres"
 
 async def check_users():
     engine = create_async_engine(DATABASE_URL, connect_args={"statement_cache_size": 0})

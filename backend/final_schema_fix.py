@@ -1,6 +1,6 @@
 import psycopg2
 
-DATABASE_URL = "postgresql://postgres:Abberh113@localhost:5432/mans_inventory"
+DATABASE_URL = "postgresql://user:password@localhost:5432/mans_inventory"
 
 def fix():
     print("Connecting to DB (sync) to fix schema...")

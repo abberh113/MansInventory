@@ -2,9 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { getProducts, createProduct, updateProduct, getCategories, API_BASE_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-
-interface Category { id: number; name: string }
-import type { Product, ApiError } from '../types';
+import type { Category, Product, ApiError } from '../types';
 
 interface MultiAddItem {
   id: string;

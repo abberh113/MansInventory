@@ -28,7 +28,7 @@ Before you click Deploy, your backend needs to know about your database:
 1. Click on the **"Variables & Secrets"** tab.
 2. Click **"Add Variable"** and enter:
    *   **Name**: `DATABASE_URL`
-   *   **Value**: `postgresql+asyncpg://postgres.mbqmkeetmvwjodmkgmoz:MansInventory113%24@aws-1-eu-west-2.pooler.supabase.com:6543/postgres`
+   *   **Value**: `postgresql+asyncpg://user:password@aws-1-eu-west-2.pooler.supabase.com:6543/postgres`
 3. Add these as well (optional but recommended):
    *   **Name**: `SECRET_KEY` | **Value**: `Any-secret-string-of-your-choice`
    *   **Name**: `ALGORITHM` | **Value**: `HS256`

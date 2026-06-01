@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 
-DATABASE_URL = "postgresql+asyncpg://postgres.mbqmkeetmvwjodmkgmoz:MansInventory113%24@aws-1-eu-west-2.pooler.supabase.com:6543/postgres"
+DATABASE_URL = "postgresql+asyncpg://user:password@aws-1-eu-west-2.pooler.supabase.com:6543/postgres"
 
 async def debug_password():
     engine = create_async_engine(DATABASE_URL, connect_args={"statement_cache_size": 0})

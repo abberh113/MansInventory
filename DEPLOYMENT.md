@@ -36,7 +36,7 @@ Make sure your environment variables are set in Cloud Run using this CLI command
 
 ```bash
 gcloud run services update manspos \
-  --set-env-vars DATABASE_URL="postgresql+asyncpg://postgres.mbqmkeetmvwjodmkgmoz:MansInventory113%24@aws-1-eu-west-2.pooler.supabase.com:6543/postgres",SECRET_KEY="mans-luxury-super-secret-key-2024",ALGORITHM="HS256" \
+  --set-env-vars DATABASE_URL="YOUR_DATABASE_URL_HERE",SECRET_KEY = "YOUR_SECRET_KEY_HERE",ALGORITHM="HS256" \
   --region europe-west1
 ```
 

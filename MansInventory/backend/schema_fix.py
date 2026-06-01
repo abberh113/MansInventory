@@ -2,7 +2,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 
-DATABASE_URL = "postgresql+asyncpg://postgres:Abberh113@localhost:5432/mans_inventory"
+DATABASE_URL = "postgresql+asyncpg://user:password@localhost:5432/mans_inventory"
 
 async def fix():
     engine = create_async_engine(DATABASE_URL)
