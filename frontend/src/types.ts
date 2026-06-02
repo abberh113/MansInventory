@@ -44,7 +44,8 @@ export interface Order {
 export interface ApiError {
   response?: {
     data?: {
-      detail?: string | { msg: string }[];
+      detail?: string | any[];
+      error_msg?: string;
     };
   };
 }

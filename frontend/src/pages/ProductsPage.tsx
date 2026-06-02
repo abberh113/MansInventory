@@ -89,8 +89,13 @@ const ProductsPage: React.FC = () => {
       setSuccess(editItem ? 'Product updated.' : 'Product created.');
     } catch (err) {
       const apiErr = err as ApiError;
-      const msg = apiErr.response?.data?.detail || apiErr.response?.data?.error_msg || 'Operation failed.';
-      setError(typeof msg === 'string' ? msg : 'Operation failed.');
+      const data = apiErr.response?.data;
+      let msg = 'Operation failed.';
+      if (typeof data?.detail === 'string') msg = data.detail;
+      else if (Array.isArray(data?.detail)) msg = data.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ');
+      else if (data?.error_msg) msg = data.error_msg;
+      
+      setError(msg);
     }
   };
 
