@@ -215,7 +215,7 @@ async def create_product(
     # Notify all users & Create Audit Log (Background)
     # We DON'T pass the session to background tasks because it gets closed
     background_tasks.add_task(notify_all_product_creation, item.name, item.sku, item.price)
-    background_tasks.add_task(create_audit_log_background, current_user.id, "PRODUCT_CREATED", f"Added product '{item.name}' (SKU: {item.sku})", request.client.host if request else "N/A")
+    background_tasks.add_task(create_audit_log_background, current_user.id, "PRODUCT_CREATED", f"Added product '{item.name}' (SKU: {item.sku})", request.client.host if request and request.client else "N/A")
     
     return item
 
@@ -263,7 +263,7 @@ async def bulk_upload_products(
             
     if products_added > 0:
         await session.commit()
-        background_tasks.add_task(create_audit_log_background, current_user.id, "BULK_PRODUCT_UPLOAD", f"Uploaded {products_added} products via CSV", request.client.host if request else "N/A")
+        background_tasks.add_task(create_audit_log_background, current_user.id, "BULK_PRODUCT_UPLOAD", f"Uploaded {products_added} products via CSV", request.client.host if request and request.client else "N/A")
     
     return {"status": "success", "added": products_added, "errors": errors}
 
@@ -321,7 +321,7 @@ async def update_product(
         await session.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update product: {str(e)}")
     
-    background_tasks.add_task(create_audit_log_background, current_user.id, "PRODUCT_UPDATED", f"Updated product '{prod.name}' (SKU: {prod.sku})", request.client.host if request else "N/A")
+    background_tasks.add_task(create_audit_log_background, current_user.id, "PRODUCT_UPDATED", f"Updated product '{prod.name}' (SKU: {prod.sku})", request.client.host if request and request.client else "N/A")
     
     return prod
 
