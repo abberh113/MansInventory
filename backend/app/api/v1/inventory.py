@@ -39,16 +39,28 @@ except Exception as e:
 async def _supabase_upload(file_name: str, content: bytes, content_type: str) -> str | None:
     """Upload file to Supabase Storage in a thread and return public URL."""
     if not supabase:
+        print("⚠️ Supabase client not initialized.")
         return None
-    def _do_upload():
-        supabase.storage.from_("products").upload(
-            path=file_name,
-            file=content,
-            file_options={"content-type": content_type or "application/octet-stream"}
-        )
-        return supabase.storage.from_("products").get_public_url(file_name)
     
-    return await asyncio.to_thread(_do_upload)
+    clean_name = "".join([c if c.isalnum() or c in ".-_" else "_" for c in file_name])
+    
+    def _do_upload():
+        try:
+            supabase.storage.from_("products").upload(
+                path=clean_name,
+                file=content,
+                file_options={"content-type": content_type or "application/octet-stream", "upsert": "true"}
+            )
+            return f"{settings.SUPABASE_URL}/storage/v1/object/public/products/{clean_name}"
+        except Exception as e:
+            print(f"❌ Supabase Storage Error: {e}")
+            raise e
+    
+    try:
+        return await asyncio.to_thread(_do_upload)
+    except Exception as e:
+        print(f"❌ Upload thread failure: {e}")
+        return None
 
 
 # ----------------------
