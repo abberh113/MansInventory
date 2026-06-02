@@ -155,7 +155,7 @@ async def delete_category(category_id: int,
 # ----------------------
 # PRODUCTS
 # ----------------------
-UPLOADS_DIR = "uploads/products"
+# File system constants removed for Supabase compatibility
 
 @router.get("/products", response_model=List[ProductRead])
 async def list_products(

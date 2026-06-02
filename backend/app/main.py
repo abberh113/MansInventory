@@ -12,13 +12,7 @@ import asyncio
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-# Ensure uploads directory exists if possible (ephemeral on Vercel)
-UPLOAD_DIR = "uploads"
-if not os.path.exists(UPLOAD_DIR):
-    try:
-        os.makedirs(f"{UPLOAD_DIR}/products", exist_ok=True)
-    except Exception as e:
-        print(f"⚠️ Could not create uploads directory (expected on Vercel): {e}")
+# Note: Local uploads are disabled. Using Supabase Storage.
 
 async def run_migrations():
     """Run DB migrations manually when needed."""
@@ -96,11 +90,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         },
     )
 
-# Serve uploaded files (only if directory exists)
-if os.path.exists(UPLOAD_DIR):
-    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-else:
-    print("⚠️ Uploads directory not found. Static file serving for uploads disabled.")
+# Local file serving disabled for cloud stability.
 
 # Register Routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
