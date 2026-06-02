@@ -91,9 +91,8 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "Internal server error", 
-            "error_type": type(exc).__name__,
-            "error_msg": str(exc)
+            "detail": f"Critical Server Error: {type(exc).__name__} - {str(exc)}",
+            "path": request.url.path
         },
     )
 
