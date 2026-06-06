@@ -192,22 +192,31 @@ async def create_product(
 
     # Save image if provided
     image_path = None
-    if image and supabase:
+    if image and image.filename and supabase:
         try:
             file_ext = image.filename.split(".")[-1]
             file_name = f"{sku}_{int(datetime.now().timestamp())}.{file_ext}"
+            print(f"📸 Preparing upload for: {file_name}")
+            
             content = await image.read()
+            if not content:
+                print("⚠️ Uploaded file is empty.")
             
             # Use helper to upload in a thread pool (prevent blocking loop)
             image_path = await _supabase_upload(file_name, content, image.content_type)
             if image_path:
                 print(f"✅ Successfully uploaded image: {image_path}")
+            else:
+                print("⚠️ Supabase upload returned None (check helper logs)")
+        except FileNotFoundError as fne:
+            print(f"❌ FileNotFoundError during upload: {fne}")
+            raise HTTPException(status_code=500, detail=f"File system error on server: {str(fne)}. Check if 'uploads' directory is being referenced.")
         except Exception as e:
             print(f"❌ Failed to upload image to Supabase: {type(e).__name__}: {e}")
             # Don't fail the whole product creation if image upload fails, but log it
             image_path = None
     elif image:
-        print("⚠️ Supabase credentials missing or client not initialized. Image upload skipped.")
+        print("⚠️ Supabase credentials missing/client not initialized or filename empty. Image upload skipped.")
 
     try:
         item = Product(
@@ -221,15 +230,18 @@ async def create_product(
         await session.refresh(item)
     except Exception as e:
         await session.rollback()
-        print(f"❌ Database error creating product: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to save product: {str(e)}")
+        print(f"❌ Database error creating product: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Database save failed: {str(e)}")
     
     # Notify all users & Create Audit Log (Background)
-    # We DON'T pass the session to background tasks because it gets closed
-    background_tasks.add_task(notify_all_product_creation, item.name, item.sku, item.price)
-    background_tasks.add_task(create_audit_log_background, current_user.id, "PRODUCT_CREATED", f"Added product '{item.name}' (SKU: {item.sku})", request.client.host if request and request.client else "N/A")
+    try:
+        background_tasks.add_task(notify_all_product_creation, item.name, item.sku, item.price)
+        background_tasks.add_task(create_audit_log_background, current_user.id, "PRODUCT_CREATED", f"Added product '{item.name}' (SKU: {item.sku})", request.client.host if request and request.client else "N/A")
+    except Exception as e:
+        print(f"⚠️ Background task registration failed: {e}")
     
     return item
+
 
 @router.post("/products/bulk")
 async def bulk_upload_products(
@@ -309,10 +321,12 @@ async def update_product(
     if stock_quantity is not None: prod.stock_quantity = stock_quantity
     if category_id is not None: prod.category_id = category_id
 
-    if image and supabase:
+    if image and image.filename and supabase:
         try:
             file_ext = image.filename.split(".")[-1]
             file_name = f"{prod.sku}_{int(datetime.now().timestamp())}.{file_ext}"
+            print(f"📸 Preparing update upload for: {file_name}")
+            
             content = await image.read()
             
             # Use helper to upload in a thread pool
@@ -320,10 +334,16 @@ async def update_product(
             if new_path:
                 prod.image_path = new_path
                 print(f"✅ Successfully updated image: {prod.image_path}")
+            else:
+                print("⚠️ Supabase update upload returned None")
+        except FileNotFoundError as fne:
+            print(f"❌ FileNotFoundError during update upload: {fne}")
+            raise HTTPException(status_code=500, detail=f"File system error during update: {str(fne)}")
         except Exception as e:
             print(f"❌ Failed to upload image to Supabase: {type(e).__name__}: {e}")
     elif image:
-        print("⚠️ Supabase credentials missing. Image upload skipped.")
+        print("⚠️ Supabase credentials missing/client not initialized or filename empty. Image update skipped.")
+
 
     try:
         session.add(prod)
