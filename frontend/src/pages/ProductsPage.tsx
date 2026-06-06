@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { getProducts, createProduct, updateProduct, getCategories, API_BASE_URL } from '../services/api';
+import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, API_BASE_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import type { Category, Product, ApiError } from '../types';
@@ -68,12 +68,30 @@ const ProductsPage: React.FC = () => {
     setShowModal(true);
   };
 
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
+    try {
+      setLoading(true);
+      await deleteProduct(id);
+      setSuccess('Product deleted successfully.');
+      fetchData();
+    } catch (err) {
+      setError('Failed to delete product.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(''); setSuccess('');
     const fd = new FormData();
     fd.append('name', form.name); fd.append('sku', form.sku); fd.append('price', form.price);
     fd.append('stock_quantity', form.stock_quantity); fd.append('category_id', form.category_id);
+    
+    // Create a processing state for better UX
+    setLoading(true);
+    
     try {
       if (selectedFile) {
         setSuccess('Optimizing image...');
@@ -81,12 +99,18 @@ const ProductsPage: React.FC = () => {
         fd.append('image', compressed, 'product.jpg');
       }
 
-      if (editItem) await updateProduct(editItem.id, fd);
-      else await createProduct(fd);
+      if (editItem) {
+        await updateProduct(editItem.id, fd);
+        setSuccess('Product updated.');
+      } else {
+        await createProduct(fd);
+        setSuccess('Product created.');
+      }
       
+      // Explicitly close modal and refresh
       setShowModal(false); 
+      setEditItem(null);
       fetchData();
-      setSuccess(editItem ? 'Product updated.' : 'Product created.');
     } catch (err) {
       const apiErr = err as ApiError;
       const data = apiErr.response?.data;
@@ -96,6 +120,8 @@ const ProductsPage: React.FC = () => {
       else if (data?.error_msg) msg = data.error_msg;
       
       setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -312,7 +338,10 @@ const ProductsPage: React.FC = () => {
                     <span className="product-price">₦{p.price.toLocaleString()}</span>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       {canEdit && (
-                        <button className="qty-btn" onClick={() => openEdit(p)} title="Edit">✏️</button>
+                        <>
+                          <button className="qty-btn" onClick={() => openEdit(p)} title="Edit">✏️</button>
+                          <button className="qty-btn delete" onClick={() => handleDelete(p.id)} title="Delete">🗑️</button>
+                        </>
                       )}
                       <button 
                         className="btn-add-cart" 
